@@ -38,3 +38,8 @@ jednodušší cestu?"
 - Data v `localStorage`, klíč `shit-app-entries`.
 - Formulář nemá "start" obrazovku — appka se otevře rovnou do něj a po
   uložení se vyprázdní/resetuje (čas = teď) pro další záznam.
+- Nasazení: GitHub Pages, deploy automaticky přes
+  `.github/workflows/pages.yml` při pushi do hlavní větve. URL:
+  https://jankoweb.github.io/My.Code.App.Shit/
+- Repo je jednogitbranchové (`claude/poop-app-design-cdoncp` je hlavní
+  i jediná větev) — commituj rovnou do ní, není potřeba PR flow.
