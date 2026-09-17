@@ -32,8 +32,18 @@
       </div>
     </div>
 
-    <label class="field-label" for="timeInput">Čas</label>
-    <input type="text" id="timeInput" class="time-input" inputmode="decimal" placeholder="HH:MM">
+    <div class="field-label">Kdy (stolice)</div>
+    <div class="field-row">
+      <input type="text" id="stoolDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
+      <input type="text" id="stoolTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+    </div>
+
+    <div class="field-label">Kdy jsi jedl <span class="field-label-hint">(nepovinné)</span></div>
+    <div class="field-row">
+      <input type="text" id="foodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
+      <input type="text" id="foodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+    </div>
+    <div id="foodDiff" class="food-diff" hidden></div>
 
     <div class="field-label">Jídlo</div>
     <div class="tags-grid" id="tagsGrid"></div>
@@ -109,20 +119,24 @@
     <div class="day-detail-card">
       <div class="day-detail-title">Upravit záznam</div>
 
-      <label class="settings-row">
-        <span>Datum</span>
+      <div class="field-label">Kdy (stolice)</div>
+      <div class="field-row">
         <input type="text" id="editDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
-      </label>
-      <label class="settings-row">
-        <span>Čas</span>
         <input type="text" id="editTimeInput" class="edit-field-input" placeholder="HH:MM">
-      </label>
+      </div>
 
       <div class="stool-block stool-block--compact">
         <div class="stool-value" id="editStoolValue">4</div>
         <div class="stool-desc" id="editStoolDesc"></div>
         <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="7" step="1" value="4">
       </div>
+
+      <div class="field-label">Kdy jsi jedl <span class="field-label-hint">(nepovinné)</span></div>
+      <div class="field-row">
+        <input type="text" id="editFoodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
+        <input type="text" id="editFoodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+      </div>
+      <div id="editFoodDiff" class="food-diff" hidden></div>
 
       <div class="tags-grid" id="editTagsGrid"></div>
 

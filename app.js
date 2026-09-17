@@ -1,13 +1,13 @@
 const STORAGE_KEY = "shit-app-entries";
 
 const STOOL_LABELS = {
-  1: "Tvrdé hrudky (zácpa)",
-  2: "Hrudkovitá bulva",
-  3: "Klobása s prasklinami",
-  4: "Hladká klobása",
-  5: "Měkké kapky",
-  6: "Kašovitá, nesourodá",
-  7: "Vodnatá (průjem)",
+  1: "Normální",
+  2: "Mírně měkčí, ale tvarovaná",
+  3: "Měkká, rozpadá se",
+  4: "Kašovitá, bez pevného tvaru",
+  5: "Řídká, kousky v tekutině",
+  6: "Vodnatá, naléhavé nutkání",
+  7: "Úplně vodnatá, výbušná",
 };
 
 const TAGS = [
@@ -78,6 +78,41 @@ function parseCzechDate(text) {
   return { day, month, year };
 }
 
+function parseDateTime(dateText, timeText) {
+  const d = parseCzechDate(dateText);
+  const t = parse24Time(timeText);
+  if (!d || !t) return null;
+  return new Date(d.year, d.month - 1, d.day, t.h, t.m, 0);
+}
+
+function formatDiffHuman(stoolDate, foodDate) {
+  const diffMs = stoolDate - foodDate;
+  const absMin = Math.round(Math.abs(diffMs) / 60000);
+  const h = Math.floor(absMin / 60);
+  const m = absMin % 60;
+  const text = h > 0 ? `${h} h ${m} min` : `${m} min`;
+  return diffMs < 0 ? { text: `⚠️ jídlo je ${text} PO stolici`, warn: true } : { text: `jedl jsi ${text} před stolicí`, warn: false };
+}
+
+function wireFoodDiff(stoolDateEl, stoolTimeEl, foodDateEl, foodTimeEl, diffEl) {
+  function update() {
+    const stoolAt = parseDateTime(stoolDateEl.value, stoolTimeEl.value);
+    const foodAt = foodDateEl.value.trim() || foodTimeEl.value.trim() ? parseDateTime(foodDateEl.value, foodTimeEl.value) : null;
+    if (!stoolAt || !foodAt) {
+      diffEl.hidden = true;
+      diffEl.textContent = "";
+      diffEl.classList.remove("food-diff--warn");
+      return;
+    }
+    const { text, warn } = formatDiffHuman(stoolAt, foodAt);
+    diffEl.textContent = text;
+    diffEl.classList.toggle("food-diff--warn", warn);
+    diffEl.hidden = false;
+  }
+  [stoolDateEl, stoolTimeEl, foodDateEl, foodTimeEl].forEach((el) => el.addEventListener("input", update));
+  return update;
+}
+
 // --- storage ---
 
 function loadEntries() {
@@ -101,7 +136,11 @@ function saveEntries(entries) {
 const stoolSliderEl = $("stoolSlider");
 const stoolValueEl = $("stoolValue");
 const stoolDescEl = $("stoolDesc");
-const timeInputEl = $("timeInput");
+const stoolDateInputEl = $("stoolDateInput");
+const stoolTimeInputEl = $("stoolTimeInput");
+const foodDateInputEl = $("foodDateInput");
+const foodTimeInputEl = $("foodTimeInput");
+const foodDiffEl = $("foodDiff");
 const tagsGridEl = $("tagsGrid");
 const noteInputEl = $("noteInput");
 const saveBtnEl = $("saveBtn");
@@ -144,6 +183,9 @@ const editTimeInputEl = $("editTimeInput");
 const editStoolSliderEl = $("editStoolSlider");
 const editStoolValueEl = $("editStoolValue");
 const editStoolDescEl = $("editStoolDesc");
+const editFoodDateInputEl = $("editFoodDateInput");
+const editFoodTimeInputEl = $("editFoodTimeInput");
+const editFoodDiffEl = $("editFoodDiff");
 const editTagsGridEl = $("editTagsGrid");
 const editNoteInputEl = $("editNoteInput");
 const editDeleteBtnEl = $("editDeleteBtn");
@@ -191,31 +233,48 @@ function updateStoolDisplay(sliderEl, valueEl, descEl) {
 stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl));
 editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl));
 
-timeInputEl.addEventListener("input", liveColonFormat);
+stoolTimeInputEl.addEventListener("input", liveColonFormat);
+foodTimeInputEl.addEventListener("input", liveColonFormat);
 editTimeInputEl.addEventListener("input", liveColonFormat);
+editFoodTimeInputEl.addEventListener("input", liveColonFormat);
+
+const updateFormFoodDiff = wireFoodDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
+const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
 
 function resetForm() {
   stoolSliderEl.value = "4";
   updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl);
-  timeInputEl.value = formatHHMM(new Date());
+  const now = new Date();
+  stoolDateInputEl.value = formatCzechDate(now);
+  stoolTimeInputEl.value = formatHHMM(now);
+  foodDateInputEl.value = "";
+  foodTimeInputEl.value = "";
+  updateFormFoodDiff();
   formTags = new Set();
   buildTagButtons(tagsGridEl, formTags);
   noteInputEl.value = "";
 }
 
 function saveNewEntry() {
-  const parsed = parse24Time(timeInputEl.value);
-  if (!parsed) {
-    alert("Neplatný čas, zadej ve tvaru HH:MM.");
+  const at = parseDateTime(stoolDateInputEl.value, stoolTimeInputEl.value);
+  if (!at) {
+    alert("Neplatné datum nebo čas stolice.");
     return;
   }
-  const now = new Date();
-  const at = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parsed.h, parsed.m, 0);
+  let foodAt = null;
+  if (foodDateInputEl.value.trim() || foodTimeInputEl.value.trim()) {
+    foodAt = parseDateTime(foodDateInputEl.value, foodTimeInputEl.value);
+    if (!foodAt) {
+      alert("Neplatné datum nebo čas jídla.");
+      return;
+    }
+  }
   const entry = {
     id: `${at.toISOString()}-${Math.random().toString(36).slice(2, 7)}`,
     date: dateKey(at),
     at: at.toISOString(),
     stoolType: Number(stoolSliderEl.value),
+    foodAt: foodAt ? foodAt.toISOString() : null,
     tags: Array.from(formTags),
     note: noteInputEl.value.trim(),
   };
@@ -443,10 +502,11 @@ function renderHistoryTable(entries) {
     row.className = "history-row";
     const d = new Date(entry.at);
     const tagsText = entry.tags.map((key) => TAGS.find((t) => t.key === key)?.emoji || "").join(" ");
+    const foodHint = entry.foodAt ? ` · ${formatDiffHuman(d, new Date(entry.foodAt)).text}` : "";
     row.innerHTML = `
       <span class="history-datetime">${formatCzechDate(d)} ${formatHHMM(d)}</span>
       <span class="history-type">${entry.stoolType}</span>
-      <span class="history-tags">${tagsText}${entry.note ? " · " + entry.note : ""}</span>
+      <span class="history-tags">${tagsText}${entry.note ? " · " + entry.note : ""}${foodHint}</span>
     `;
     row.addEventListener("click", () => openEdit(entry));
     historyTableEl.appendChild(row);
@@ -462,6 +522,15 @@ function openEdit(entry) {
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
   updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl);
+  if (entry.foodAt) {
+    const fd = new Date(entry.foodAt);
+    editFoodDateInputEl.value = formatCzechDate(fd);
+    editFoodTimeInputEl.value = formatHHMM(fd);
+  } else {
+    editFoodDateInputEl.value = "";
+    editFoodTimeInputEl.value = "";
+  }
+  updateEditFoodDiff();
   editTags = new Set(entry.tags);
   buildTagButtons(editTagsGridEl, editTags);
   editNoteInputEl.value = entry.note || "";
@@ -487,6 +556,14 @@ editSaveBtnEl.addEventListener("click", () => {
     return;
   }
   const at = new Date(dateParsed.year, dateParsed.month - 1, dateParsed.day, timeParsed.h, timeParsed.m, 0);
+  let foodAt = null;
+  if (editFoodDateInputEl.value.trim() || editFoodTimeInputEl.value.trim()) {
+    foodAt = parseDateTime(editFoodDateInputEl.value, editFoodTimeInputEl.value);
+    if (!foodAt) {
+      alert("Neplatné datum nebo čas jídla.");
+      return;
+    }
+  }
   const entries = loadEntries();
   const idx = entries.findIndex((e) => e.id === editingId);
   if (idx === -1) {
@@ -498,6 +575,7 @@ editSaveBtnEl.addEventListener("click", () => {
     date: dateKey(at),
     at: at.toISOString(),
     stoolType: Number(editStoolSliderEl.value),
+    foodAt: foodAt ? foodAt.toISOString() : null,
     tags: Array.from(editTags),
     note: editNoteInputEl.value.trim(),
   };
@@ -559,6 +637,4 @@ clearAllBtnEl.addEventListener("click", () => {
 
 // --- init ---
 
-buildTagButtons(tagsGridEl, formTags);
-updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl);
-timeInputEl.value = formatHHMM(new Date());
+resetForm();
