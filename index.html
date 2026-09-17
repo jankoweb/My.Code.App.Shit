@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>Aplikace na 💩</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="topbar">
+    <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
+    <div id="menu" class="menu" hidden>
+      <button id="showStatsBtn" class="menu-item">Přehled</button>
+      <button id="settingsBtn" class="menu-item">Nastavení</button>
+    </div>
+  </div>
+
+  <main>
+    <h1 class="app-title">💩</h1>
+
+    <div class="stool-block">
+      <div class="stool-value" id="stoolValue">4</div>
+      <div class="stool-desc" id="stoolDesc"></div>
+      <input type="range" id="stoolSlider" class="stool-slider" min="1" max="7" step="1" value="4">
+      <div class="stool-scale-labels">
+        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+      </div>
+    </div>
+
+    <label class="field-label" for="timeInput">Čas</label>
+    <input type="text" id="timeInput" class="time-input" inputmode="decimal" placeholder="HH:MM">
+
+    <div class="field-label">Jídlo</div>
+    <div class="tags-grid" id="tagsGrid"></div>
+
+    <label class="field-label" for="noteInput">Poznámka</label>
+    <textarea id="noteInput" class="note-input" maxlength="240" rows="2" placeholder="nepovinné"></textarea>
+
+    <button id="saveBtn" class="save-btn">Uložit</button>
+  </main>
+
+  <div id="statsView" class="stats-view" hidden>
+    <div class="view-header">
+      <button id="statsBack" class="view-back" aria-label="Zpět">←</button>
+      <h2 class="view-title">Přehled</h2>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" id="todayCountStat">–</div>
+        <div class="stat-label">dnes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalCountStat">–</div>
+        <div class="stat-label">celkem</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="avgTypeStat">–</div>
+        <div class="stat-label">Ø typ (měsíc)</div>
+      </div>
+    </div>
+
+    <div class="month-nav">
+      <button id="monthPrev" class="month-nav-btn" aria-label="Předchozí měsíc">‹</button>
+      <span id="monthLabel" class="month-label"></span>
+      <button id="monthNext" class="month-nav-btn" aria-label="Následující měsíc">›</button>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">Počet záznamů <span class="chart-unit">(/den)</span></div>
+      <div class="chart-row">
+        <div class="chart-yaxis" id="yAxisCount"><span></span><span>0</span></div>
+        <div class="chart-bars" id="chartCount"></div>
+      </div>
+      <div id="chartLabels" class="chart-labels"></div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">Rozložení typu stolice <span class="chart-unit">(Bristol 1–7)</span></div>
+      <div class="chart-row">
+        <div class="chart-yaxis" id="yAxisType"><span></span><span>0</span></div>
+        <div class="chart-bars" id="chartType"></div>
+      </div>
+      <div id="typeChartLabels" class="chart-labels chart-labels--flat"></div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">Četnost jídla <span class="chart-unit">(počet)</span></div>
+      <div class="chart-row">
+        <div class="chart-yaxis" id="yAxisTags"><span></span><span>0</span></div>
+        <div class="chart-bars" id="chartTags"></div>
+      </div>
+      <div id="tagChartLabels" class="chart-labels chart-labels--flat"></div>
+    </div>
+
+    <div class="settings-section-title">Souvislost jídlo → typ</div>
+    <div id="correlationList" class="correlation-list"></div>
+
+    <div class="settings-section-title">Záznamy</div>
+    <div id="historyTable" class="history-table"></div>
+  </div>
+
+  <div id="editOverlay" class="day-detail-overlay" hidden>
+    <div class="day-detail-card">
+      <div class="day-detail-title">Upravit záznam</div>
+
+      <label class="settings-row">
+        <span>Datum</span>
+        <input type="text" id="editDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
+      </label>
+      <label class="settings-row">
+        <span>Čas</span>
+        <input type="text" id="editTimeInput" class="edit-field-input" placeholder="HH:MM">
+      </label>
+
+      <div class="stool-block stool-block--compact">
+        <div class="stool-value" id="editStoolValue">4</div>
+        <div class="stool-desc" id="editStoolDesc"></div>
+        <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="7" step="1" value="4">
+      </div>
+
+      <div class="tags-grid" id="editTagsGrid"></div>
+
+      <textarea id="editNoteInput" class="note-input edit-note-input" maxlength="240" rows="2" placeholder="poznámka"></textarea>
+
+      <div class="guess-actions edit-actions">
+        <button id="editDeleteBtn" class="day-detail-delete-full">Smazat</button>
+        <button id="editCancelBtn" class="guess-skip-btn">Zrušit</button>
+        <button id="editSaveBtn" class="guess-save-btn">Uložit</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsView" class="stats-view" hidden>
+    <div class="view-header">
+      <button id="settingsBack" class="view-back" aria-label="Zpět">←</button>
+      <h2 class="view-title">Nastavení</h2>
+    </div>
+    <button id="exportBtn" class="menu-item settings-link">Exportovat data (JSON)</button>
+    <label class="menu-item settings-link settings-link--file">
+      Importovat data (JSON)
+      <input type="file" id="importInput" accept="application/json" hidden>
+    </label>
+    <button id="clearAllBtn" class="menu-item settings-link settings-link--danger">Smazat všechna data</button>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+  </script>
+</body>
+</html>
