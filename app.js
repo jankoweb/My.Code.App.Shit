@@ -14,16 +14,18 @@ const PAIN_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
 const STRESS_LABELS = { 1: "Žádný", 2: "Mírný", 3: "Střední", 4: "Vysoký", 5: "Velmi vysoký" };
 
 const TAGS = [
-  { key: "tucne", emoji: "🍟", label: "Tučné, smažené" },
-  { key: "cukr", emoji: "🍬", label: "Sladké" },
+  { key: "cukr", emoji: "🍬", label: "Cukr" },
+  { key: "sul", emoji: "🧂", label: "Sůl" },
+  { key: "tuk", emoji: "🧈", label: "Tuk" },
+  { key: "tucne", emoji: "🍟", label: "Smažené" },
+  { key: "vlaknina", emoji: "🌾", label: "Vláknina" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
-  { key: "lepek", emoji: "🌾", label: "Pšenice, lepek" },
-  { key: "korenene", emoji: "🌶️", label: "Pálivé, kořeněné" },
-  { key: "cibule", emoji: "🧄", label: "Cibule, česnek" },
-  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
+  { key: "palive", emoji: "🌶️", label: "Pálivé" },
+  { key: "korenene", emoji: "🌿", label: "Kořeněné" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
   { key: "alkohol", emoji: "🍺", label: "Alkohol" },
-  { key: "neobvykle", emoji: "➕", label: "Něco neobvyklého" },
+  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
+  { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
 const SUPPLEMENTS = [
@@ -162,7 +164,6 @@ function saveEntries(entries) {
 // --- elements ---
 
 const stoolSliderEl = $("stoolSlider");
-const stoolValueEl = $("stoolValue");
 const stoolDescEl = $("stoolDesc");
 const stoolDateInputEl = $("stoolDateInput");
 const stoolTimeInputEl = $("stoolTimeInput");
@@ -224,7 +225,6 @@ const editOverlayEl = $("editOverlay");
 const editDateInputEl = $("editDateInput");
 const editTimeInputEl = $("editTimeInput");
 const editStoolSliderEl = $("editStoolSlider");
-const editStoolValueEl = $("editStoolValue");
 const editStoolDescEl = $("editStoolDesc");
 const editFoodDateInputEl = $("editFoodDateInput");
 const editFoodTimeInputEl = $("editFoodTimeInput");
@@ -243,7 +243,6 @@ const editSaveBtnEl = $("editSaveBtn");
 
 const exportBtnEl = $("exportBtn");
 const importInputEl = $("importInput");
-const clearAllBtnEl = $("clearAllBtn");
 
 // --- form: tags ---
 
@@ -275,10 +274,8 @@ function buildTagButtons(container, items, tagSet, onChange) {
   });
 }
 
-function updateStoolDisplay(sliderEl, valueEl, descEl) {
-  const v = Number(sliderEl.value);
-  valueEl.textContent = String(v);
-  descEl.textContent = STOOL_LABELS[v] || "";
+function updateStoolDisplay(sliderEl, descEl) {
+  descEl.textContent = STOOL_LABELS[Number(sliderEl.value)] || "";
 }
 
 function updateScaleDesc(sliderEl, descEl, labels) {
@@ -320,8 +317,8 @@ const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, URGENCY_LABELS, 
 const editBloatingChoice = createChoiceState(editBloatingGroupEl, BLOATING_LABELS, 1);
 const editPainChoice = createChoiceState(editPainGroupEl, PAIN_LABELS, 1);
 
-stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl));
-editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl));
+stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolDescEl));
+editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolDescEl));
 
 stressSliderEl.addEventListener("input", () => updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS));
 editStressSliderEl.addEventListener("input", () => updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS));
@@ -336,7 +333,7 @@ const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFo
 
 function resetForm() {
   stoolSliderEl.value = "1";
-  updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl);
+  updateStoolDisplay(stoolSliderEl, stoolDescEl);
   urgencyChoice.set(1);
   bloatingChoice.set(1);
   painChoice.set(1);
@@ -643,7 +640,7 @@ function openEdit(entry) {
   editDateInputEl.value = formatCzechDate(d);
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
-  updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl);
+  updateStoolDisplay(editStoolSliderEl, editStoolDescEl);
   editUrgencyChoice.set(entry.urgency);
   editBloatingChoice.set(entry.bloating);
   editPainChoice.set(entry.pain);
@@ -761,12 +758,6 @@ importInputEl.addEventListener("change", async () => {
   } finally {
     importInputEl.value = "";
   }
-});
-
-clearAllBtnEl.addEventListener("click", () => {
-  if (!confirm("Opravdu smazat úplně všechna data? Tohle nejde vrátit zpět.")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  window.location.reload();
 });
 
 // --- init ---

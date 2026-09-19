@@ -8,7 +8,7 @@ než cokoliv navrhneš nebo změníš.
 Appka má JEDEN účel: otevřít appku → rovnou vidím formulář (typ
 stolice, jídelní tagy, čas, poznámka) → Uložit → formulář se vyprázdní.
 Plus Přehled (grafy, tabulka záznamů, editace) a minimální Nastavení
-(export/import/smazání dat). To je vše.
+(export/import dat). To je vše.
 
 Pokud budoucí zadání (moje nebo uživatelovo) směřuje k některému z
 tohoto, **odmítni a připomeň motivaci** místo rovnou implementace:
