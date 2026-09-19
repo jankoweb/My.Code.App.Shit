@@ -149,6 +149,50 @@ main {
   padding: 0 2px;
 }
 
+/* compact scale sliders (urgency, bloating, pain, stress) */
+
+.scale-block {
+  margin-bottom: 16px;
+}
+
+.scale-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.scale-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.scale-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scale-slider {
+  width: 100%;
+  accent-color: var(--ok);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--fg);
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ok);
+}
+
 /* form fields */
 
 .field-label {
