@@ -25,6 +25,7 @@ const TAGS = [
   { key: "kofein", emoji: "☕", label: "Kofein" },
   { key: "alkohol", emoji: "🍺", label: "Alkohol" },
   { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
+  { key: "nadymave", emoji: "💨", label: "Nadýmavé" },
   { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
