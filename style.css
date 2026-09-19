@@ -34,13 +34,13 @@ body {
 main {
   width: 100%;
   max-width: 360px;
-  padding-top: 44px;
+  padding-top: 32px;
 }
 
 .app-title {
   text-align: center;
-  font-size: 40px;
-  margin: 0 0 16px;
+  font-size: 24px;
+  margin: 0 0 8px;
 }
 
 /* topbar / menu */
@@ -112,18 +112,18 @@ main {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 20px;
+  padding: 12px 14px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .stool-block--compact {
-  padding: 14px;
+  padding: 10px 14px;
   margin-bottom: 12px;
 }
 
 .stool-value {
-  font-size: 40px;
+  font-size: 30px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -131,7 +131,7 @@ main {
 .stool-desc {
   color: var(--muted);
   font-size: 13px;
-  margin: 4px 0 14px;
+  margin: 2px 0 8px;
   min-height: 16px;
 }
 
@@ -149,7 +149,7 @@ main {
   padding: 0 2px;
 }
 
-/* compact scale sliders (urgency, bloating, pain, stress) */
+/* compact scale slider (stress) */
 
 .scale-block {
   margin-bottom: 16px;
@@ -174,22 +174,6 @@ main {
 
 .scale-slider {
   width: 100%;
-  accent-color: var(--ok);
-}
-
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--fg);
-  margin-bottom: 20px;
-  cursor: pointer;
-}
-
-.checkbox-row input {
-  width: 18px;
-  height: 18px;
   accent-color: var(--ok);
 }
 
@@ -246,6 +230,22 @@ main {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 20px;
+}
+
+.tags-grid--choice {
+  margin-bottom: 12px;
+}
+
+.tags-grid--compact {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.tags-grid--compact .tag-btn {
+  padding: 6px 4px;
+  font-size: 12px;
+  flex: 1;
+  text-align: center;
 }
 
 .tag-btn {

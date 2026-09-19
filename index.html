@@ -32,29 +32,14 @@
       </div>
     </div>
 
-    <div class="scale-block">
-      <div class="scale-row">
-        <span class="scale-label">Naléhavost</span>
-        <span class="scale-value" id="urgencyDesc"></span>
-      </div>
-      <input type="range" id="urgencySlider" class="scale-slider" min="1" max="3" step="1" value="1">
-    </div>
+    <div class="field-label">Naléhavost</div>
+    <div class="tags-grid tags-grid--choice" id="urgencyGroup"></div>
 
-    <div class="scale-block">
-      <div class="scale-row">
-        <span class="scale-label">Nadýmání</span>
-        <span class="scale-value" id="bloatingDesc"></span>
-      </div>
-      <input type="range" id="bloatingSlider" class="scale-slider" min="1" max="3" step="1" value="1">
-    </div>
+    <div class="field-label">Nadýmání</div>
+    <div class="tags-grid tags-grid--choice" id="bloatingGroup"></div>
 
-    <div class="scale-block">
-      <div class="scale-row">
-        <span class="scale-label">Bolest, křeče</span>
-        <span class="scale-value" id="painDesc"></span>
-      </div>
-      <input type="range" id="painSlider" class="scale-slider" min="1" max="3" step="1" value="1">
-    </div>
+    <div class="field-label">Bolest, křeče</div>
+    <div class="tags-grid tags-grid--choice" id="painGroup"></div>
 
     <div class="field-label">Kdy (stolice)</div>
     <div class="field-row">
@@ -72,13 +57,8 @@
     <div class="field-label">Jídlo</div>
     <div class="tags-grid" id="tagsGrid"></div>
 
-    <label class="checkbox-row">
-      <input type="checkbox" id="overateCheckbox">
-      Přejedený před spaním
-    </label>
-
     <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
-    <div class="tags-grid" id="supplementsGrid"></div>
+    <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
 
     <div class="scale-block">
       <div class="scale-row">
@@ -89,7 +69,7 @@
     </div>
 
     <label class="field-label" for="noteInput">Poznámka</label>
-    <textarea id="noteInput" class="note-input" maxlength="240" rows="2" placeholder="nepovinné"></textarea>
+    <textarea id="noteInput" class="note-input" maxlength="240" rows="2"></textarea>
 
     <button id="saveBtn" class="save-btn">Uložit</button>
 
@@ -201,29 +181,14 @@
         <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
       </div>
 
-      <div class="scale-block">
-        <div class="scale-row">
-          <span class="scale-label">Naléhavost</span>
-          <span class="scale-value" id="editUrgencyDesc"></span>
-        </div>
-        <input type="range" id="editUrgencySlider" class="scale-slider" min="1" max="3" step="1" value="1">
-      </div>
+      <div class="field-label">Naléhavost</div>
+      <div class="tags-grid tags-grid--choice" id="editUrgencyGroup"></div>
 
-      <div class="scale-block">
-        <div class="scale-row">
-          <span class="scale-label">Nadýmání</span>
-          <span class="scale-value" id="editBloatingDesc"></span>
-        </div>
-        <input type="range" id="editBloatingSlider" class="scale-slider" min="1" max="3" step="1" value="1">
-      </div>
+      <div class="field-label">Nadýmání</div>
+      <div class="tags-grid tags-grid--choice" id="editBloatingGroup"></div>
 
-      <div class="scale-block">
-        <div class="scale-row">
-          <span class="scale-label">Bolest, křeče</span>
-          <span class="scale-value" id="editPainDesc"></span>
-        </div>
-        <input type="range" id="editPainSlider" class="scale-slider" min="1" max="3" step="1" value="1">
-      </div>
+      <div class="field-label">Bolest, křeče</div>
+      <div class="tags-grid tags-grid--choice" id="editPainGroup"></div>
 
       <div class="field-label">Kdy jsi jedl <span class="field-label-hint">(nepovinné)</span></div>
       <div class="field-row">
@@ -234,13 +199,8 @@
 
       <div class="tags-grid" id="editTagsGrid"></div>
 
-      <label class="checkbox-row">
-        <input type="checkbox" id="editOverateCheckbox">
-        Přejedený před spaním
-      </label>
-
       <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
-      <div class="tags-grid" id="editSupplementsGrid"></div>
+      <div class="tags-grid tags-grid--compact" id="editSupplementsGrid"></div>
 
       <div class="scale-block">
         <div class="scale-row">
