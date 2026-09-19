@@ -373,6 +373,7 @@ main {
   border-radius: 8px;
   padding: 12px;
   text-align: center;
+  cursor: pointer;
 }
 
 .stat-value {
@@ -404,6 +405,11 @@ main {
   color: var(--fg);
   font-size: 18px;
   cursor: pointer;
+}
+
+.month-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .month-label {
@@ -462,6 +468,10 @@ main {
   height: 100%;
 }
 
+.chart-bar-wrap--clickable {
+  cursor: pointer;
+}
+
 .chart-bar {
   width: 100%;
   max-width: 18px;
@@ -469,6 +479,25 @@ main {
   background: var(--bar-color, var(--ok));
   border-radius: 2px 2px 0 0;
   min-height: 2px;
+}
+
+.chart-bars.has-active .chart-bar:not(.chart-bar--active) {
+  opacity: 0.3;
+}
+
+.chart-bar--active {
+  outline: 2px solid var(--fg);
+  outline-offset: 1px;
+}
+
+.chart-hint {
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 8px;
 }
 
 .chart-labels {
@@ -659,6 +688,15 @@ main {
   border-color: var(--ok);
   color: #0d1a0d;
   font-weight: 700;
+}
+
+.guess-save-btn:disabled {
+  background: var(--card-2);
+  border-color: var(--line);
+  color: var(--fg);
+  font-weight: 400;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .day-detail-delete-full {
