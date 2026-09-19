@@ -89,43 +89,55 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat">
+      <div class="stat" data-hint="Počet záznamů zapsaných dnes.">
         <div class="stat-value" id="todayCountStat">–</div>
         <div class="stat-label">dnes</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-hint="Počet všech záznamů od začátku.">
         <div class="stat-value" id="totalCountStat">–</div>
         <div class="stat-label">celkem</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-hint="Průměrná konzistence stolice za měsíc (1 tvarovaná – 5 vodnatá).">
         <div class="stat-value" id="avgTypeStat">–</div>
         <div class="stat-label">Ø konzist. (měsíc)</div>
       </div>
     </div>
 
     <div class="stats-row">
-      <div class="stat">
+      <div class="stat" data-hint="Průměrná naléhavost za měsíc (1 normální – 3 velmi naléhavá).">
         <div class="stat-value" id="avgUrgencyStat">–</div>
         <div class="stat-label">Ø naléhavost</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-hint="Průměrné nadýmání za měsíc (1 žádné – 3 výrazné).">
         <div class="stat-value" id="avgBloatingStat">–</div>
         <div class="stat-label">Ø nadýmání</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-hint="Průměrná bolest/křeče za měsíc (1 žádné – 3 výrazné).">
         <div class="stat-value" id="avgPainStat">–</div>
         <div class="stat-label">Ø bolest</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-hint="Průměrný stres za měsíc (1 žádný – 5 velmi vysoký).">
         <div class="stat-value" id="avgStressStat">–</div>
         <div class="stat-label">Ø stres</div>
       </div>
     </div>
 
+    <div id="statsHint" class="chart-hint" hidden></div>
+
     <div class="month-nav">
       <button id="monthPrev" class="month-nav-btn" aria-label="Předchozí měsíc">‹</button>
       <span id="monthLabel" class="month-label"></span>
       <button id="monthNext" class="month-nav-btn" aria-label="Následující měsíc">›</button>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(1–5, klik = filtr)</span></div>
+      <div class="chart-row">
+        <div class="chart-yaxis" id="yAxisType"><span></span><span>0</span></div>
+        <div class="chart-bars" id="chartType"></div>
+      </div>
+      <div id="typeChartLabels" class="chart-labels chart-labels--flat"></div>
+      <div id="typeHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="chart-block">
@@ -135,15 +147,7 @@
         <div class="chart-bars" id="chartCount"></div>
       </div>
       <div id="chartLabels" class="chart-labels"></div>
-    </div>
-
-    <div class="chart-block">
-      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(1–5)</span></div>
-      <div class="chart-row">
-        <div class="chart-yaxis" id="yAxisType"><span></span><span>0</span></div>
-        <div class="chart-bars" id="chartType"></div>
-      </div>
-      <div id="typeChartLabels" class="chart-labels chart-labels--flat"></div>
+      <div id="countHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="chart-block">
@@ -153,6 +157,7 @@
         <div class="chart-bars" id="chartTags"></div>
       </div>
       <div id="tagChartLabels" class="chart-labels chart-labels--flat"></div>
+      <div id="tagHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="chart-block">
@@ -162,6 +167,7 @@
         <div class="chart-bars" id="chartSupplements"></div>
       </div>
       <div id="supplementChartLabels" class="chart-labels chart-labels--flat"></div>
+      <div id="supplementHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="settings-section-title">Souvislost jídlo → typ</div>
@@ -169,6 +175,11 @@
 
     <div class="settings-section-title">Záznamy</div>
     <div id="historyTable" class="history-table"></div>
+    <div class="month-nav">
+      <button id="historyPrev" class="month-nav-btn" aria-label="Předchozí strana">‹</button>
+      <span id="historyPageLabel" class="month-label"></span>
+      <button id="historyNext" class="month-nav-btn" aria-label="Další strana">›</button>
+    </div>
   </div>
 
   <div id="editOverlay" class="day-detail-overlay" hidden>
@@ -226,7 +237,7 @@
       <div class="guess-actions edit-actions">
         <button id="editDeleteBtn" class="day-detail-delete-full">Smazat</button>
         <button id="editCancelBtn" class="guess-skip-btn">Zrušit</button>
-        <button id="editSaveBtn" class="guess-save-btn">Uložit</button>
+        <button id="editSaveBtn" class="guess-save-btn" disabled>Uložit</button>
       </div>
     </div>
   </div>

@@ -200,26 +200,34 @@ const monthLabelEl = $("monthLabel");
 const chartCountEl = $("chartCount");
 const yAxisCountEl = $("yAxisCount");
 const chartLabelsEl = $("chartLabels");
+const countHintEl = $("countHint");
 
 const chartTypeEl = $("chartType");
 const yAxisTypeEl = $("yAxisType");
 const typeChartLabelsEl = $("typeChartLabels");
+const typeHintEl = $("typeHint");
 
 const chartTagsEl = $("chartTags");
 const yAxisTagsEl = $("yAxisTags");
 const tagChartLabelsEl = $("tagChartLabels");
+const tagHintEl = $("tagHint");
 
 const chartSupplementsEl = $("chartSupplements");
 const yAxisSupplementsEl = $("yAxisSupplements");
 const supplementChartLabelsEl = $("supplementChartLabels");
+const supplementHintEl = $("supplementHint");
 
 const avgUrgencyStatEl = $("avgUrgencyStat");
 const avgBloatingStatEl = $("avgBloatingStat");
 const avgPainStatEl = $("avgPainStat");
 const avgStressStatEl = $("avgStressStat");
+const statsHintEl = $("statsHint");
 
 const correlationListEl = $("correlationList");
 const historyTableEl = $("historyTable");
+const historyPrevEl = $("historyPrev");
+const historyNextEl = $("historyNext");
+const historyPageLabelEl = $("historyPageLabel");
 
 const editOverlayEl = $("editOverlay");
 const editDateInputEl = $("editDateInput");
@@ -282,7 +290,7 @@ function updateScaleDesc(sliderEl, descEl, labels) {
   descEl.textContent = labels[Number(sliderEl.value)] || "";
 }
 
-function createChoiceState(container, labels, initial) {
+function createChoiceState(container, labels, initial, onChange) {
   let value = initial;
   function render() {
     container.innerHTML = "";
@@ -296,6 +304,7 @@ function createChoiceState(container, labels, initial) {
       btn.addEventListener("click", () => {
         value = num;
         render();
+        if (onChange) onChange();
       });
       container.appendChild(btn);
     });
@@ -313,9 +322,9 @@ function createChoiceState(container, labels, initial) {
 const urgencyChoice = createChoiceState(urgencyGroupEl, URGENCY_LABELS, 1);
 const bloatingChoice = createChoiceState(bloatingGroupEl, BLOATING_LABELS, 1);
 const painChoice = createChoiceState(painGroupEl, PAIN_LABELS, 1);
-const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, URGENCY_LABELS, 1);
-const editBloatingChoice = createChoiceState(editBloatingGroupEl, BLOATING_LABELS, 1);
-const editPainChoice = createChoiceState(editPainGroupEl, PAIN_LABELS, 1);
+const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, URGENCY_LABELS, 1, () => updateEditSaveState());
+const editBloatingChoice = createChoiceState(editBloatingGroupEl, BLOATING_LABELS, 1, () => updateEditSaveState());
+const editPainChoice = createChoiceState(editPainGroupEl, PAIN_LABELS, 1, () => updateEditSaveState());
 
 stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolDescEl));
 editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolDescEl));
@@ -327,6 +336,36 @@ stoolTimeInputEl.addEventListener("input", liveColonFormat);
 foodTimeInputEl.addEventListener("input", liveColonFormat);
 editTimeInputEl.addEventListener("input", liveColonFormat);
 editFoodTimeInputEl.addEventListener("input", liveColonFormat);
+
+// --- edit overlay: track unsaved changes ---
+
+let editSnapshot = null;
+
+function getEditFormState() {
+  return JSON.stringify({
+    date: editDateInputEl.value,
+    time: editTimeInputEl.value,
+    stoolType: editStoolSliderEl.value,
+    urgency: editUrgencyChoice.get(),
+    bloating: editBloatingChoice.get(),
+    pain: editPainChoice.get(),
+    foodDate: editFoodDateInputEl.value,
+    foodTime: editFoodTimeInputEl.value,
+    tags: Array.from(editTags).sort(),
+    supplements: Array.from(editSupplements).sort(),
+    stress: editStressSliderEl.value,
+    note: editNoteInputEl.value,
+  });
+}
+
+function updateEditSaveState() {
+  const changed = editSnapshot !== null && getEditFormState() !== editSnapshot;
+  editSaveBtnEl.disabled = !changed;
+}
+
+[editDateInputEl, editTimeInputEl, editStoolSliderEl, editFoodDateInputEl, editFoodTimeInputEl, editStressSliderEl, editNoteInputEl].forEach((el) =>
+  el.addEventListener("input", updateEditSaveState)
+);
 
 const updateFormFoodDiff = wireFoodDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
 const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
@@ -384,6 +423,7 @@ function saveNewEntry() {
   entries.push(entry);
   saveEntries(entries);
   resetForm();
+  openStatsView();
 }
 
 saveBtnEl.addEventListener("click", saveNewEntry);
@@ -448,10 +488,14 @@ settingsBackEl.addEventListener("click", goBack);
 // --- stats view ---
 
 let statsMonth = null; // {year, month} month = 0-indexed
+let statsStoolFilter = null; // 1-5 or null
+let historyPage = 0;
 
 function openStatsView() {
   const now = new Date();
   statsMonth = { year: now.getFullYear(), month: now.getMonth() };
+  statsStoolFilter = null;
+  historyPage = 0;
   renderStats();
   openOverlay(statsViewEl);
   closeMenu();
@@ -464,6 +508,13 @@ function openSettingsView() {
 
 showStatsBtnEl.addEventListener("click", openStatsView);
 settingsBtnEl.addEventListener("click", openSettingsView);
+
+document.querySelectorAll("#statsView .stat[data-hint]").forEach((el) => {
+  el.addEventListener("click", () => {
+    const hint = el.dataset.hint;
+    toggleChartHint(statsHintEl, hint, hint);
+  });
+});
 
 monthPrevEl.addEventListener("click", () => {
   statsMonth.month -= 1;
@@ -483,22 +534,40 @@ monthNextEl.addEventListener("click", () => {
   renderStats();
 });
 
-function renderBars(barsEl, yAxisEl, values, color) {
+function renderBars(barsEl, yAxisEl, values, color, opts) {
+  const { onClick, activeIndex } = opts || {};
   barsEl.innerHTML = "";
   barsEl.style.setProperty("--bar-color", color);
+  barsEl.classList.toggle("has-active", activeIndex != null);
   const max = Math.max(1, ...values);
-  values.forEach((v) => {
+  values.forEach((v, i) => {
     const wrap = document.createElement("div");
     wrap.className = "chart-bar-wrap";
     const bar = document.createElement("div");
     bar.className = "chart-bar";
+    if (activeIndex === i) bar.classList.add("chart-bar--active");
     const pct = v <= 0 ? 0 : Math.min(100, Math.max(4, Math.round((v / max) * 100)));
     bar.style.height = `${pct}%`;
     wrap.appendChild(bar);
+    if (onClick) {
+      wrap.classList.add("chart-bar-wrap--clickable");
+      wrap.addEventListener("click", () => onClick(i, v));
+    }
     barsEl.appendChild(wrap);
   });
   yAxisEl.children[0].textContent = String(max);
   yAxisEl.children[1].textContent = "0";
+}
+
+function toggleChartHint(hintEl, key, text) {
+  if (!hintEl.hidden && hintEl.dataset.key === key) {
+    hintEl.hidden = true;
+    hintEl.dataset.key = "";
+    return;
+  }
+  hintEl.textContent = text;
+  hintEl.dataset.key = key;
+  hintEl.hidden = false;
 }
 
 function renderLabels(el, labels) {
@@ -525,23 +594,48 @@ function renderStats() {
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
-  todayCountStatEl.textContent = String(entries.filter((e) => e.date === todayKey()).length);
-  totalCountStatEl.textContent = String(entries.length);
-  avgTypeStatEl.textContent = monthEntries.length
-    ? (monthEntries.reduce((sum, e) => sum + e.stoolType, 0) / monthEntries.length).toFixed(1)
+  // stoolType filter (set by clicking a bar in the consistency chart) scopes
+  // everything below it: stat tiles, count/day chart, tag & supplement charts
+  const filterActive = statsStoolFilter !== null;
+  const filteredEntries = filterActive ? entries.filter((e) => e.stoolType === statsStoolFilter) : entries;
+  const filteredMonthEntries = filterActive ? monthEntries.filter((e) => e.stoolType === statsStoolFilter) : monthEntries;
+
+  todayCountStatEl.textContent = String(filteredEntries.filter((e) => e.date === todayKey()).length);
+  totalCountStatEl.textContent = String(filteredEntries.length);
+  avgTypeStatEl.textContent = filteredMonthEntries.length
+    ? (filteredMonthEntries.reduce((sum, e) => sum + e.stoolType, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
-  avgUrgencyStatEl.textContent = monthEntries.length
-    ? (monthEntries.reduce((sum, e) => sum + e.urgency, 0) / monthEntries.length).toFixed(1)
+  avgUrgencyStatEl.textContent = filteredMonthEntries.length
+    ? (filteredMonthEntries.reduce((sum, e) => sum + e.urgency, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
-  avgBloatingStatEl.textContent = monthEntries.length
-    ? (monthEntries.reduce((sum, e) => sum + e.bloating, 0) / monthEntries.length).toFixed(1)
+  avgBloatingStatEl.textContent = filteredMonthEntries.length
+    ? (filteredMonthEntries.reduce((sum, e) => sum + e.bloating, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
-  avgPainStatEl.textContent = monthEntries.length
-    ? (monthEntries.reduce((sum, e) => sum + e.pain, 0) / monthEntries.length).toFixed(1)
+  avgPainStatEl.textContent = filteredMonthEntries.length
+    ? (filteredMonthEntries.reduce((sum, e) => sum + e.pain, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
-  avgStressStatEl.textContent = monthEntries.length
-    ? (monthEntries.reduce((sum, e) => sum + e.stress, 0) / monthEntries.length).toFixed(1)
+  avgStressStatEl.textContent = filteredMonthEntries.length
+    ? (filteredMonthEntries.reduce((sum, e) => sum + e.stress, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
+
+  // stool consistency distribution — always shows the full month (it's the
+  // filter control itself); clicking a bar toggles the filter
+  const typeValues = [1, 2, 3, 4, 5].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
+  renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a", {
+    activeIndex: filterActive ? statsStoolFilter - 1 : null,
+    onClick: (i) => {
+      const clicked = i + 1;
+      statsStoolFilter = statsStoolFilter === clicked ? null : clicked;
+      renderStats();
+    },
+  });
+  renderLabels(typeChartLabelsEl, ["1", "2", "3", "4", "5"]);
+  if (filterActive) {
+    typeHintEl.hidden = false;
+    typeHintEl.textContent = `Filtr: typ ${statsStoolFilter} · ${filteredMonthEntries.length}× tento měsíc (klikni znovu pro zrušení)`;
+  } else {
+    typeHintEl.hidden = true;
+  }
 
   // count per day
   const dCount = daysInMonth(year, month);
@@ -549,27 +643,26 @@ function renderStats() {
   const dayLabels = [];
   for (let day = 1; day <= dCount; day++) {
     const key = `${year}-${pad2(month + 1)}-${pad2(day)}`;
-    dayValues.push(monthEntries.filter((e) => e.date === key).length);
+    dayValues.push(filteredMonthEntries.filter((e) => e.date === key).length);
     dayLabels.push(String(day));
   }
-  renderBars(chartCountEl, yAxisCountEl, dayValues, "#42a5f5");
+  renderBars(chartCountEl, yAxisCountEl, dayValues, "#42a5f5", {
+    onClick: (i, v) => toggleChartHint(countHintEl, `count-${i}`, `${dayLabels[i]}. ${MONTH_NAMES[month].toLowerCase()}: ${v} záznamů`),
+  });
   renderLabels(chartLabelsEl, dayLabels);
 
-  // stool consistency distribution
-  const typeValues = [1, 2, 3, 4, 5].map(
-    (t) => monthEntries.filter((e) => e.stoolType === t).length
-  );
-  renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a");
-  renderLabels(typeChartLabelsEl, ["1", "2", "3", "4", "5"]);
-
   // tag frequency
-  const tagValues = TAGS.map((tag) => monthEntries.filter((e) => e.tags.includes(tag.key)).length);
-  renderBars(chartTagsEl, yAxisTagsEl, tagValues, "#ffca28");
+  const tagValues = TAGS.map((tag) => filteredMonthEntries.filter((e) => e.tags.includes(tag.key)).length);
+  renderBars(chartTagsEl, yAxisTagsEl, tagValues, "#ffca28", {
+    onClick: (i, v) => toggleChartHint(tagHintEl, `tag-${i}`, `${TAGS[i].emoji} ${TAGS[i].label}: ${v}×`),
+  });
   renderLabels(tagChartLabelsEl, TAGS.map((t) => t.emoji));
 
   // supplement frequency
-  const supplementValues = SUPPLEMENTS.map((s) => monthEntries.filter((e) => e.supplements.includes(s.key)).length);
-  renderBars(chartSupplementsEl, yAxisSupplementsEl, supplementValues, "#ab47bc");
+  const supplementValues = SUPPLEMENTS.map((s) => filteredMonthEntries.filter((e) => e.supplements.includes(s.key)).length);
+  renderBars(chartSupplementsEl, yAxisSupplementsEl, supplementValues, "#ab47bc", {
+    onClick: (i, v) => toggleChartHint(supplementHintEl, `supp-${i}`, `${SUPPLEMENTS[i].emoji} ${SUPPLEMENTS[i].label}: ${v}×`),
+  });
   renderLabels(supplementChartLabelsEl, SUPPLEMENTS.map((s) => s.label));
 
   renderCorrelation(entries);
@@ -606,6 +699,8 @@ function renderCorrelation(entries) {
   });
 }
 
+const HISTORY_PAGE_SIZE = 15;
+
 function renderHistoryTable(entries) {
   historyTableEl.innerHTML = "";
   if (!entries.length) {
@@ -613,10 +708,17 @@ function renderHistoryTable(entries) {
     p.className = "history-empty";
     p.textContent = "Zatím žádné záznamy.";
     historyTableEl.appendChild(p);
+    historyPageLabelEl.textContent = "";
+    historyPrevEl.disabled = true;
+    historyNextEl.disabled = true;
     return;
   }
-  const sorted = [...entries].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 200);
-  sorted.forEach((entry) => {
+  const sorted = [...entries].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / HISTORY_PAGE_SIZE));
+  historyPage = Math.min(historyPage, totalPages - 1);
+  const start = historyPage * HISTORY_PAGE_SIZE;
+  const pageItems = sorted.slice(start, start + HISTORY_PAGE_SIZE);
+  pageItems.forEach((entry) => {
     const row = document.createElement("div");
     row.className = "history-row";
     const d = new Date(entry.at);
@@ -630,7 +732,20 @@ function renderHistoryTable(entries) {
     row.addEventListener("click", () => openEdit(entry));
     historyTableEl.appendChild(row);
   });
+  historyPageLabelEl.textContent = `${historyPage + 1} / ${totalPages}`;
+  historyPrevEl.disabled = historyPage === 0;
+  historyNextEl.disabled = historyPage >= totalPages - 1;
 }
+
+historyPrevEl.addEventListener("click", () => {
+  historyPage -= 1;
+  renderHistoryTable(loadEntries());
+});
+
+historyNextEl.addEventListener("click", () => {
+  historyPage += 1;
+  renderHistoryTable(loadEntries());
+});
 
 // --- edit overlay ---
 
@@ -656,16 +771,19 @@ function openEdit(entry) {
   }
   updateEditFoodDiff();
   editTags = new Set(entry.tags);
-  buildTagButtons(editTagsGridEl, TAGS, editTags);
+  buildTagButtons(editTagsGridEl, TAGS, editTags, updateEditSaveState);
   editSupplements = new Set(entry.supplements);
-  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements);
+  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements, updateEditSaveState);
   editNoteInputEl.value = entry.note || "";
   editOverlayEl.hidden = false;
+  editSnapshot = getEditFormState();
+  updateEditSaveState();
 }
 
 function closeEdit() {
   editOverlayEl.hidden = true;
   editingId = null;
+  editSnapshot = null;
 }
 
 editCancelBtnEl.addEventListener("click", closeEdit);
