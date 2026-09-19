@@ -14,16 +14,18 @@ const PAIN_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
 const STRESS_LABELS = { 1: "Žádný", 2: "Mírný", 3: "Střední", 4: "Vysoký", 5: "Velmi vysoký" };
 
 const TAGS = [
-  { key: "tucne", emoji: "🍟", label: "Tučné, smažené" },
-  { key: "cukr", emoji: "🍬", label: "Sladké" },
+  { key: "cukr", emoji: "🍬", label: "Cukr" },
+  { key: "sul", emoji: "🧂", label: "Sůl" },
+  { key: "tuk", emoji: "🧈", label: "Tuk" },
+  { key: "tucne", emoji: "🍟", label: "Smažené" },
+  { key: "vlaknina", emoji: "🌾", label: "Vláknina" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
-  { key: "lepek", emoji: "🌾", label: "Pšenice, lepek" },
-  { key: "korenene", emoji: "🌶️", label: "Pálivé, kořeněné" },
-  { key: "cibule", emoji: "🧄", label: "Cibule, česnek" },
-  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
+  { key: "palive", emoji: "🌶️", label: "Pálivé" },
+  { key: "korenene", emoji: "🌿", label: "Kořeněné" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
   { key: "alkohol", emoji: "🍺", label: "Alkohol" },
-  { key: "neobvykle", emoji: "➕", label: "Něco neobvyklého" },
+  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
+  { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
 const SUPPLEMENTS = [
