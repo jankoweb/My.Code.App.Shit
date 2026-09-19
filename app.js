@@ -763,3 +763,10 @@ clearAllBtnEl.addEventListener("click", () => {
 // --- init ---
 
 resetForm();
+
+const buildFooterEl = $("buildFooter");
+if (buildFooterEl && window.BUILD_INFO) {
+  const { sha, time } = window.BUILD_INFO;
+  const timeText = time ? new Date(time).toLocaleString("cs-CZ") : "lokální vývoj";
+  buildFooterEl.textContent = `verze ${sha} · build ${timeText}`;
+}
