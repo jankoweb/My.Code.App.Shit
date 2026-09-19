@@ -1,25 +1,38 @@
 const STORAGE_KEY = "shit-app-entries";
 
 const STOOL_LABELS = {
-  1: "Normální",
-  2: "Mírně měkčí, ale tvarovaná",
-  3: "Měkká, rozpadá se",
-  4: "Kašovitá, bez pevného tvaru",
-  5: "Řídká, kousky v tekutině",
-  6: "Vodnatá, naléhavé nutkání",
-  7: "Úplně vodnatá, výbušná",
+  1: "Tvarovaná – pevná, normální",
+  2: "Měkká – drží tvar",
+  3: "Kašovitá – nedrží tvar",
+  4: "Řídká – málo pevné složky",
+  5: "Vodnatá – jen tekutina",
 };
 
+const URGENCY_LABELS = { 1: "Normální", 2: "Naléhavá", 3: "Velmi naléhavá" };
+const BLOATING_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
+const PAIN_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
+const STRESS_LABELS = { 1: "Žádný", 2: "Mírný", 3: "Střední", 4: "Vysoký", 5: "Velmi vysoký" };
+
 const TAGS = [
-  { key: "cukr", emoji: "🍬", label: "Cukr" },
-  { key: "tucne", emoji: "🍟", label: "Tučné" },
-  { key: "kofein", emoji: "☕", label: "Kofein" },
-  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
-  { key: "alkohol", emoji: "🍺", label: "Alkohol" },
+  { key: "tucne", emoji: "🍟", label: "Tučné, smažené" },
+  { key: "cukr", emoji: "🍬", label: "Sladké" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
-  { key: "korenene", emoji: "🌶️", label: "Kořeněné" },
-  { key: "lepek", emoji: "🌾", label: "Lepek" },
-  { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
+  { key: "lepek", emoji: "🌾", label: "Pšenice, lepek" },
+  { key: "korenene", emoji: "🌶️", label: "Pálivé, kořeněné" },
+  { key: "cibule", emoji: "🧄", label: "Cibule, česnek" },
+  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
+  { key: "kofein", emoji: "☕", label: "Kofein" },
+  { key: "alkohol", emoji: "🍺", label: "Alkohol" },
+  { key: "neobvykle", emoji: "➕", label: "Něco neobvyklého" },
+];
+
+const SUPPLEMENTS = [
+  { key: "c", emoji: "💊", label: "C" },
+  { key: "mg", emoji: "💊", label: "Mg" },
+  { key: "zn", emoji: "💊", label: "Zn" },
+  { key: "d", emoji: "💊", label: "D" },
+  { key: "b", emoji: "💊", label: "B" },
+  { key: "e", emoji: "💊", label: "E" },
 ];
 
 const MONTH_NAMES = [
@@ -115,13 +128,29 @@ function wireFoodDiff(stoolDateEl, stoolTimeEl, foodDateEl, foodTimeEl, diffEl) 
 
 // --- storage ---
 
+function clampScale(v, max) {
+  return v >= 1 && v <= max ? v : 1;
+}
+
 function loadEntries() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     if (!Array.isArray(raw)) return [];
-    return raw.filter(
-      (e) => e && typeof e.id === "string" && typeof e.date === "string" && typeof e.at === "string" && typeof e.stoolType === "number"
-    );
+    return raw
+      .filter(
+        (e) => e && typeof e.id === "string" && typeof e.date === "string" && typeof e.at === "string" && typeof e.stoolType === "number"
+      )
+      .map((e) => ({
+        ...e,
+        stoolType: Math.min(5, Math.max(1, e.stoolType)),
+        urgency: clampScale(e.urgency, 3),
+        bloating: clampScale(e.bloating, 3),
+        pain: clampScale(e.pain, 3),
+        stress: clampScale(e.stress, 5),
+        tags: Array.isArray(e.tags) ? e.tags : [],
+        supplements: Array.isArray(e.supplements) ? e.supplements : [],
+        overateBeforeBed: Boolean(e.overateBeforeBed),
+      }));
   } catch {
     return [];
   }
@@ -142,6 +171,16 @@ const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
 const tagsGridEl = $("tagsGrid");
+const overateCheckboxEl = $("overateCheckbox");
+const supplementsGridEl = $("supplementsGrid");
+const urgencySliderEl = $("urgencySlider");
+const urgencyDescEl = $("urgencyDesc");
+const bloatingSliderEl = $("bloatingSlider");
+const bloatingDescEl = $("bloatingDesc");
+const painSliderEl = $("painSlider");
+const painDescEl = $("painDesc");
+const stressSliderEl = $("stressSlider");
+const stressDescEl = $("stressDesc");
 const noteInputEl = $("noteInput");
 const saveBtnEl = $("saveBtn");
 
@@ -174,6 +213,15 @@ const chartTagsEl = $("chartTags");
 const yAxisTagsEl = $("yAxisTags");
 const tagChartLabelsEl = $("tagChartLabels");
 
+const chartSupplementsEl = $("chartSupplements");
+const yAxisSupplementsEl = $("yAxisSupplements");
+const supplementChartLabelsEl = $("supplementChartLabels");
+
+const avgUrgencyStatEl = $("avgUrgencyStat");
+const avgBloatingStatEl = $("avgBloatingStat");
+const avgPainStatEl = $("avgPainStat");
+const avgStressStatEl = $("avgStressStat");
+
 const correlationListEl = $("correlationList");
 const historyTableEl = $("historyTable");
 
@@ -187,6 +235,16 @@ const editFoodDateInputEl = $("editFoodDateInput");
 const editFoodTimeInputEl = $("editFoodTimeInput");
 const editFoodDiffEl = $("editFoodDiff");
 const editTagsGridEl = $("editTagsGrid");
+const editOverateCheckboxEl = $("editOverateCheckbox");
+const editSupplementsGridEl = $("editSupplementsGrid");
+const editUrgencySliderEl = $("editUrgencySlider");
+const editUrgencyDescEl = $("editUrgencyDesc");
+const editBloatingSliderEl = $("editBloatingSlider");
+const editBloatingDescEl = $("editBloatingDesc");
+const editPainSliderEl = $("editPainSlider");
+const editPainDescEl = $("editPainDesc");
+const editStressSliderEl = $("editStressSlider");
+const editStressDescEl = $("editStressDesc");
 const editNoteInputEl = $("editNoteInput");
 const editDeleteBtnEl = $("editDeleteBtn");
 const editCancelBtnEl = $("editCancelBtn");
@@ -200,11 +258,13 @@ const clearAllBtnEl = $("clearAllBtn");
 
 let formTags = new Set();
 let editTags = new Set();
+let formSupplements = new Set();
+let editSupplements = new Set();
 let editingId = null;
 
-function buildTagButtons(container, tagSet, onChange) {
+function buildTagButtons(container, items, tagSet, onChange) {
   container.innerHTML = "";
-  TAGS.forEach((tag) => {
+  items.forEach((tag) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "tag-btn";
@@ -230,8 +290,22 @@ function updateStoolDisplay(sliderEl, valueEl, descEl) {
   descEl.textContent = STOOL_LABELS[v] || "";
 }
 
+function updateScaleDesc(sliderEl, descEl, labels) {
+  descEl.textContent = labels[Number(sliderEl.value)] || "";
+}
+
 stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl));
 editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl));
+
+urgencySliderEl.addEventListener("input", () => updateScaleDesc(urgencySliderEl, urgencyDescEl, URGENCY_LABELS));
+bloatingSliderEl.addEventListener("input", () => updateScaleDesc(bloatingSliderEl, bloatingDescEl, BLOATING_LABELS));
+painSliderEl.addEventListener("input", () => updateScaleDesc(painSliderEl, painDescEl, PAIN_LABELS));
+stressSliderEl.addEventListener("input", () => updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS));
+
+editUrgencySliderEl.addEventListener("input", () => updateScaleDesc(editUrgencySliderEl, editUrgencyDescEl, URGENCY_LABELS));
+editBloatingSliderEl.addEventListener("input", () => updateScaleDesc(editBloatingSliderEl, editBloatingDescEl, BLOATING_LABELS));
+editPainSliderEl.addEventListener("input", () => updateScaleDesc(editPainSliderEl, editPainDescEl, PAIN_LABELS));
+editStressSliderEl.addEventListener("input", () => updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS));
 
 stoolTimeInputEl.addEventListener("input", liveColonFormat);
 foodTimeInputEl.addEventListener("input", liveColonFormat);
@@ -242,8 +316,16 @@ const updateFormFoodDiff = wireFoodDiff(stoolDateInputEl, stoolTimeInputEl, food
 const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
 
 function resetForm() {
-  stoolSliderEl.value = "4";
+  stoolSliderEl.value = "1";
   updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl);
+  urgencySliderEl.value = "1";
+  updateScaleDesc(urgencySliderEl, urgencyDescEl, URGENCY_LABELS);
+  bloatingSliderEl.value = "1";
+  updateScaleDesc(bloatingSliderEl, bloatingDescEl, BLOATING_LABELS);
+  painSliderEl.value = "1";
+  updateScaleDesc(painSliderEl, painDescEl, PAIN_LABELS);
+  stressSliderEl.value = "1";
+  updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS);
   const now = new Date();
   stoolDateInputEl.value = formatCzechDate(now);
   stoolTimeInputEl.value = formatHHMM(now);
@@ -251,7 +333,10 @@ function resetForm() {
   foodTimeInputEl.value = "";
   updateFormFoodDiff();
   formTags = new Set();
-  buildTagButtons(tagsGridEl, formTags);
+  buildTagButtons(tagsGridEl, TAGS, formTags);
+  overateCheckboxEl.checked = false;
+  formSupplements = new Set();
+  buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements);
   noteInputEl.value = "";
 }
 
@@ -274,8 +359,14 @@ function saveNewEntry() {
     date: dateKey(at),
     at: at.toISOString(),
     stoolType: Number(stoolSliderEl.value),
+    urgency: Number(urgencySliderEl.value),
+    bloating: Number(bloatingSliderEl.value),
+    pain: Number(painSliderEl.value),
     foodAt: foodAt ? foodAt.toISOString() : null,
     tags: Array.from(formTags),
+    overateBeforeBed: overateCheckboxEl.checked,
+    supplements: Array.from(formSupplements),
+    stress: Number(stressSliderEl.value),
     note: noteInputEl.value.trim(),
   };
   const entries = loadEntries();
@@ -428,6 +519,18 @@ function renderStats() {
   avgTypeStatEl.textContent = monthEntries.length
     ? (monthEntries.reduce((sum, e) => sum + e.stoolType, 0) / monthEntries.length).toFixed(1)
     : "–";
+  avgUrgencyStatEl.textContent = monthEntries.length
+    ? (monthEntries.reduce((sum, e) => sum + e.urgency, 0) / monthEntries.length).toFixed(1)
+    : "–";
+  avgBloatingStatEl.textContent = monthEntries.length
+    ? (monthEntries.reduce((sum, e) => sum + e.bloating, 0) / monthEntries.length).toFixed(1)
+    : "–";
+  avgPainStatEl.textContent = monthEntries.length
+    ? (monthEntries.reduce((sum, e) => sum + e.pain, 0) / monthEntries.length).toFixed(1)
+    : "–";
+  avgStressStatEl.textContent = monthEntries.length
+    ? (monthEntries.reduce((sum, e) => sum + e.stress, 0) / monthEntries.length).toFixed(1)
+    : "–";
 
   // count per day
   const dCount = daysInMonth(year, month);
@@ -441,17 +544,22 @@ function renderStats() {
   renderBars(chartCountEl, yAxisCountEl, dayValues, "#42a5f5");
   renderLabels(chartLabelsEl, dayLabels);
 
-  // stool type distribution
-  const typeValues = [1, 2, 3, 4, 5, 6, 7].map(
+  // stool consistency distribution
+  const typeValues = [1, 2, 3, 4, 5].map(
     (t) => monthEntries.filter((e) => e.stoolType === t).length
   );
   renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a");
-  renderLabels(typeChartLabelsEl, ["1", "2", "3", "4", "5", "6", "7"]);
+  renderLabels(typeChartLabelsEl, ["1", "2", "3", "4", "5"]);
 
   // tag frequency
   const tagValues = TAGS.map((tag) => monthEntries.filter((e) => e.tags.includes(tag.key)).length);
   renderBars(chartTagsEl, yAxisTagsEl, tagValues, "#ffca28");
   renderLabels(tagChartLabelsEl, TAGS.map((t) => t.emoji));
+
+  // supplement frequency
+  const supplementValues = SUPPLEMENTS.map((s) => monthEntries.filter((e) => e.supplements.includes(s.key)).length);
+  renderBars(chartSupplementsEl, yAxisSupplementsEl, supplementValues, "#ab47bc");
+  renderLabels(supplementChartLabelsEl, SUPPLEMENTS.map((s) => s.label));
 
   renderCorrelation(entries);
   renderHistoryTable(entries);
@@ -522,6 +630,14 @@ function openEdit(entry) {
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
   updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl);
+  editUrgencySliderEl.value = String(entry.urgency);
+  updateScaleDesc(editUrgencySliderEl, editUrgencyDescEl, URGENCY_LABELS);
+  editBloatingSliderEl.value = String(entry.bloating);
+  updateScaleDesc(editBloatingSliderEl, editBloatingDescEl, BLOATING_LABELS);
+  editPainSliderEl.value = String(entry.pain);
+  updateScaleDesc(editPainSliderEl, editPainDescEl, PAIN_LABELS);
+  editStressSliderEl.value = String(entry.stress);
+  updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS);
   if (entry.foodAt) {
     const fd = new Date(entry.foodAt);
     editFoodDateInputEl.value = formatCzechDate(fd);
@@ -532,7 +648,10 @@ function openEdit(entry) {
   }
   updateEditFoodDiff();
   editTags = new Set(entry.tags);
-  buildTagButtons(editTagsGridEl, editTags);
+  buildTagButtons(editTagsGridEl, TAGS, editTags);
+  editOverateCheckboxEl.checked = Boolean(entry.overateBeforeBed);
+  editSupplements = new Set(entry.supplements);
+  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements);
   editNoteInputEl.value = entry.note || "";
   editOverlayEl.hidden = false;
 }
@@ -575,8 +694,14 @@ editSaveBtnEl.addEventListener("click", () => {
     date: dateKey(at),
     at: at.toISOString(),
     stoolType: Number(editStoolSliderEl.value),
+    urgency: Number(editUrgencySliderEl.value),
+    bloating: Number(editBloatingSliderEl.value),
+    pain: Number(editPainSliderEl.value),
     foodAt: foodAt ? foodAt.toISOString() : null,
     tags: Array.from(editTags),
+    overateBeforeBed: editOverateCheckboxEl.checked,
+    supplements: Array.from(editSupplements),
+    stress: Number(editStressSliderEl.value),
     note: editNoteInputEl.value.trim(),
   };
   saveEntries(entries);

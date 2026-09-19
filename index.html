@@ -24,12 +24,36 @@
     <h1 class="app-title">💩</h1>
 
     <div class="stool-block">
-      <div class="stool-value" id="stoolValue">4</div>
+      <div class="stool-value" id="stoolValue">1</div>
       <div class="stool-desc" id="stoolDesc"></div>
-      <input type="range" id="stoolSlider" class="stool-slider" min="1" max="7" step="1" value="4">
+      <input type="range" id="stoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
       <div class="stool-scale-labels">
-        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
       </div>
+    </div>
+
+    <div class="scale-block">
+      <div class="scale-row">
+        <span class="scale-label">Naléhavost</span>
+        <span class="scale-value" id="urgencyDesc"></span>
+      </div>
+      <input type="range" id="urgencySlider" class="scale-slider" min="1" max="3" step="1" value="1">
+    </div>
+
+    <div class="scale-block">
+      <div class="scale-row">
+        <span class="scale-label">Nadýmání</span>
+        <span class="scale-value" id="bloatingDesc"></span>
+      </div>
+      <input type="range" id="bloatingSlider" class="scale-slider" min="1" max="3" step="1" value="1">
+    </div>
+
+    <div class="scale-block">
+      <div class="scale-row">
+        <span class="scale-label">Bolest, křeče</span>
+        <span class="scale-value" id="painDesc"></span>
+      </div>
+      <input type="range" id="painSlider" class="scale-slider" min="1" max="3" step="1" value="1">
     </div>
 
     <div class="field-label">Kdy (stolice)</div>
@@ -47,6 +71,22 @@
 
     <div class="field-label">Jídlo</div>
     <div class="tags-grid" id="tagsGrid"></div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="overateCheckbox">
+      Přejedený před spaním
+    </label>
+
+    <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
+    <div class="tags-grid" id="supplementsGrid"></div>
+
+    <div class="scale-block">
+      <div class="scale-row">
+        <span class="scale-label">Stres</span>
+        <span class="scale-value" id="stressDesc"></span>
+      </div>
+      <input type="range" id="stressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+    </div>
 
     <label class="field-label" for="noteInput">Poznámka</label>
     <textarea id="noteInput" class="note-input" maxlength="240" rows="2" placeholder="nepovinné"></textarea>
@@ -71,7 +111,26 @@
       </div>
       <div class="stat">
         <div class="stat-value" id="avgTypeStat">–</div>
-        <div class="stat-label">Ø typ (měsíc)</div>
+        <div class="stat-label">Ø konzist. (měsíc)</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" id="avgUrgencyStat">–</div>
+        <div class="stat-label">Ø naléhavost</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="avgBloatingStat">–</div>
+        <div class="stat-label">Ø nadýmání</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="avgPainStat">–</div>
+        <div class="stat-label">Ø bolest</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="avgStressStat">–</div>
+        <div class="stat-label">Ø stres</div>
       </div>
     </div>
 
@@ -91,7 +150,7 @@
     </div>
 
     <div class="chart-block">
-      <div class="chart-title">Rozložení typu stolice <span class="chart-unit">(Bristol 1–7)</span></div>
+      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(1–5)</span></div>
       <div class="chart-row">
         <div class="chart-yaxis" id="yAxisType"><span></span><span>0</span></div>
         <div class="chart-bars" id="chartType"></div>
@@ -106,6 +165,15 @@
         <div class="chart-bars" id="chartTags"></div>
       </div>
       <div id="tagChartLabels" class="chart-labels chart-labels--flat"></div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">Četnost doplňků <span class="chart-unit">(počet)</span></div>
+      <div class="chart-row">
+        <div class="chart-yaxis" id="yAxisSupplements"><span></span><span>0</span></div>
+        <div class="chart-bars" id="chartSupplements"></div>
+      </div>
+      <div id="supplementChartLabels" class="chart-labels chart-labels--flat"></div>
     </div>
 
     <div class="settings-section-title">Souvislost jídlo → typ</div>
@@ -126,9 +194,33 @@
       </div>
 
       <div class="stool-block stool-block--compact">
-        <div class="stool-value" id="editStoolValue">4</div>
+        <div class="stool-value" id="editStoolValue">1</div>
         <div class="stool-desc" id="editStoolDesc"></div>
-        <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="7" step="1" value="4">
+        <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
+      </div>
+
+      <div class="scale-block">
+        <div class="scale-row">
+          <span class="scale-label">Naléhavost</span>
+          <span class="scale-value" id="editUrgencyDesc"></span>
+        </div>
+        <input type="range" id="editUrgencySlider" class="scale-slider" min="1" max="3" step="1" value="1">
+      </div>
+
+      <div class="scale-block">
+        <div class="scale-row">
+          <span class="scale-label">Nadýmání</span>
+          <span class="scale-value" id="editBloatingDesc"></span>
+        </div>
+        <input type="range" id="editBloatingSlider" class="scale-slider" min="1" max="3" step="1" value="1">
+      </div>
+
+      <div class="scale-block">
+        <div class="scale-row">
+          <span class="scale-label">Bolest, křeče</span>
+          <span class="scale-value" id="editPainDesc"></span>
+        </div>
+        <input type="range" id="editPainSlider" class="scale-slider" min="1" max="3" step="1" value="1">
       </div>
 
       <div class="field-label">Kdy jsi jedl <span class="field-label-hint">(nepovinné)</span></div>
@@ -139,6 +231,22 @@
       <div id="editFoodDiff" class="food-diff" hidden></div>
 
       <div class="tags-grid" id="editTagsGrid"></div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="editOverateCheckbox">
+        Přejedený před spaním
+      </label>
+
+      <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
+      <div class="tags-grid" id="editSupplementsGrid"></div>
+
+      <div class="scale-block">
+        <div class="scale-row">
+          <span class="scale-label">Stres</span>
+          <span class="scale-value" id="editStressDesc"></span>
+        </div>
+        <input type="range" id="editStressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+      </div>
 
       <textarea id="editNoteInput" class="note-input edit-note-input" maxlength="240" rows="2" placeholder="poznámka"></textarea>
 
