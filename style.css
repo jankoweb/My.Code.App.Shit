@@ -490,14 +490,26 @@ main {
   outline-offset: 1px;
 }
 
-.chart-hint {
+.filter-status {
   font-size: 12px;
-  color: var(--fg);
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 60;
+  transform: translate(-50%, -100%);
   background: var(--card-2);
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 6px 10px;
-  margin-top: 8px;
+  font-size: 12px;
+  color: var(--fg);
+  max-width: 220px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .chart-labels {

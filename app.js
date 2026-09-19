@@ -201,7 +201,6 @@ const monthLabelEl = $("monthLabel");
 const chartCountEl = $("chartCount");
 const yAxisCountEl = $("yAxisCount");
 const chartLabelsEl = $("chartLabels");
-const countHintEl = $("countHint");
 
 const chartTypeEl = $("chartType");
 const yAxisTypeEl = $("yAxisType");
@@ -211,18 +210,17 @@ const typeHintEl = $("typeHint");
 const chartTagsEl = $("chartTags");
 const yAxisTagsEl = $("yAxisTags");
 const tagChartLabelsEl = $("tagChartLabels");
-const tagHintEl = $("tagHint");
 
 const chartSupplementsEl = $("chartSupplements");
 const yAxisSupplementsEl = $("yAxisSupplements");
 const supplementChartLabelsEl = $("supplementChartLabels");
-const supplementHintEl = $("supplementHint");
 
 const avgUrgencyStatEl = $("avgUrgencyStat");
 const avgBloatingStatEl = $("avgBloatingStat");
 const avgPainStatEl = $("avgPainStat");
 const avgStressStatEl = $("avgStressStat");
-const statsHintEl = $("statsHint");
+
+const chartTooltipEl = $("chartTooltip");
 
 const correlationListEl = $("correlationList");
 const historyTableEl = $("historyTable");
@@ -511,10 +509,7 @@ showStatsBtnEl.addEventListener("click", openStatsView);
 settingsBtnEl.addEventListener("click", openSettingsView);
 
 document.querySelectorAll("#statsView .stat[data-hint]").forEach((el) => {
-  el.addEventListener("click", () => {
-    const hint = el.dataset.hint;
-    toggleChartHint(statsHintEl, hint, hint);
-  });
+  el.addEventListener("click", () => showTooltip(el, el.dataset.hint));
 });
 
 monthPrevEl.addEventListener("click", () => {
@@ -552,7 +547,7 @@ function renderBars(barsEl, yAxisEl, values, color, opts) {
     wrap.appendChild(bar);
     if (onClick) {
       wrap.classList.add("chart-bar-wrap--clickable");
-      wrap.addEventListener("click", () => onClick(i, v));
+      wrap.addEventListener("click", () => onClick(i, v, wrap));
     }
     barsEl.appendChild(wrap);
   });
@@ -560,15 +555,18 @@ function renderBars(barsEl, yAxisEl, values, color, opts) {
   yAxisEl.children[1].textContent = "0";
 }
 
-function toggleChartHint(hintEl, key, text) {
-  if (!hintEl.hidden && hintEl.dataset.key === key) {
-    hintEl.hidden = true;
-    hintEl.dataset.key = "";
-    return;
-  }
-  hintEl.textContent = text;
-  hintEl.dataset.key = key;
-  hintEl.hidden = false;
+let tooltipTimeout = null;
+
+function showTooltip(targetEl, text) {
+  const rect = targetEl.getBoundingClientRect();
+  chartTooltipEl.textContent = text;
+  chartTooltipEl.style.left = `${Math.min(Math.max(rect.left + rect.width / 2, 70), window.innerWidth - 70)}px`;
+  chartTooltipEl.style.top = `${rect.top - 8}px`;
+  chartTooltipEl.hidden = false;
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout = setTimeout(() => {
+    chartTooltipEl.hidden = true;
+  }, 2500);
 }
 
 function renderLabels(el, labels) {
@@ -624,7 +622,8 @@ function renderStats() {
   const typeValues = [1, 2, 3, 4, 5].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
   renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a", {
     activeIndex: filterActive ? statsStoolFilter - 1 : null,
-    onClick: (i) => {
+    onClick: (i, v, el) => {
+      showTooltip(el, `${STOOL_LABELS[i + 1]} · ${v}×`);
       const clicked = i + 1;
       statsStoolFilter = statsStoolFilter === clicked ? null : clicked;
       renderStats();
@@ -648,21 +647,21 @@ function renderStats() {
     dayLabels.push(String(day));
   }
   renderBars(chartCountEl, yAxisCountEl, dayValues, "#42a5f5", {
-    onClick: (i, v) => toggleChartHint(countHintEl, `count-${i}`, `${dayLabels[i]}. ${MONTH_NAMES[month].toLowerCase()}: ${v} záznamů`),
+    onClick: (i, v, el) => showTooltip(el, `${dayLabels[i]}. ${MONTH_NAMES[month].toLowerCase()}: ${v} záznamů`),
   });
   renderLabels(chartLabelsEl, dayLabels);
 
   // tag frequency
   const tagValues = TAGS.map((tag) => filteredMonthEntries.filter((e) => e.tags.includes(tag.key)).length);
   renderBars(chartTagsEl, yAxisTagsEl, tagValues, "#ffca28", {
-    onClick: (i, v) => toggleChartHint(tagHintEl, `tag-${i}`, `${TAGS[i].emoji} ${TAGS[i].label}: ${v}×`),
+    onClick: (i, v, el) => showTooltip(el, `${TAGS[i].emoji} ${TAGS[i].label}: ${v}×`),
   });
   renderLabels(tagChartLabelsEl, TAGS.map((t) => t.emoji));
 
   // supplement frequency
   const supplementValues = SUPPLEMENTS.map((s) => filteredMonthEntries.filter((e) => e.supplements.includes(s.key)).length);
   renderBars(chartSupplementsEl, yAxisSupplementsEl, supplementValues, "#ab47bc", {
-    onClick: (i, v) => toggleChartHint(supplementHintEl, `supp-${i}`, `${SUPPLEMENTS[i].emoji} ${SUPPLEMENTS[i].label}: ${v}×`),
+    onClick: (i, v, el) => showTooltip(el, `${SUPPLEMENTS[i].emoji} ${SUPPLEMENTS[i].label}: ${v}×`),
   });
   renderLabels(supplementChartLabelsEl, SUPPLEMENTS.map((s) => s.label));
 

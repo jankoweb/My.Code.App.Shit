@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
-  <title>Aplikace na 💩</title>
+  <title>Aplikace na houno</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -122,8 +122,6 @@
       </div>
     </div>
 
-    <div id="statsHint" class="chart-hint" hidden></div>
-
     <div class="month-nav">
       <button id="monthPrev" class="month-nav-btn" aria-label="Předchozí měsíc">‹</button>
       <span id="monthLabel" class="month-label"></span>
@@ -137,7 +135,7 @@
         <div class="chart-bars" id="chartType"></div>
       </div>
       <div id="typeChartLabels" class="chart-labels chart-labels--flat"></div>
-      <div id="typeHint" class="chart-hint" hidden></div>
+      <div id="typeHint" class="filter-status" hidden></div>
     </div>
 
     <div class="chart-block">
@@ -147,7 +145,6 @@
         <div class="chart-bars" id="chartCount"></div>
       </div>
       <div id="chartLabels" class="chart-labels"></div>
-      <div id="countHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="chart-block">
@@ -157,7 +154,6 @@
         <div class="chart-bars" id="chartTags"></div>
       </div>
       <div id="tagChartLabels" class="chart-labels chart-labels--flat"></div>
-      <div id="tagHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="chart-block">
@@ -167,7 +163,6 @@
         <div class="chart-bars" id="chartSupplements"></div>
       </div>
       <div id="supplementChartLabels" class="chart-labels chart-labels--flat"></div>
-      <div id="supplementHint" class="chart-hint" hidden></div>
     </div>
 
     <div class="settings-section-title">Souvislost jídlo → typ</div>
@@ -253,6 +248,8 @@
       <input type="file" id="importInput" accept="application/json" hidden>
     </label>
   </div>
+
+  <div id="chartTooltip" class="chart-tooltip" hidden></div>
 
   <script src="version.js"></script>
   <script src="app.js"></script>

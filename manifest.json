@@ -1,6 +1,6 @@
 {
-  "name": "Aplikace na 💩",
-  "short_name": "💩 App",
+  "name": "Aplikace na houno",
+  "short_name": "Houno",
   "description": "Rychlý záznam typu stolice a souvisejícího jídla.",
   "start_url": "./index.html",
   "scope": "./",
