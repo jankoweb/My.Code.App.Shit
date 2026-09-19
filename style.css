@@ -677,16 +677,7 @@ main {
 }
 
 .settings-link--file {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  text-align: center;
-}
-
-.settings-link--danger {
-  color: var(--accent);
-  border-color: var(--accent);
 }
 
 /* build footer */

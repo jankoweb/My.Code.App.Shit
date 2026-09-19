@@ -241,7 +241,6 @@ const editSaveBtnEl = $("editSaveBtn");
 
 const exportBtnEl = $("exportBtn");
 const importInputEl = $("importInput");
-const clearAllBtnEl = $("clearAllBtn");
 
 // --- form: tags ---
 
@@ -757,12 +756,6 @@ importInputEl.addEventListener("change", async () => {
   } finally {
     importInputEl.value = "";
   }
-});
-
-clearAllBtnEl.addEventListener("click", () => {
-  if (!confirm("Opravdu smazat úplně všechna data? Tohle nejde vrátit zpět.")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  window.location.reload();
 });
 
 // --- init ---
