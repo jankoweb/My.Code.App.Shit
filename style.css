@@ -667,3 +667,12 @@ main {
   color: var(--accent);
   border-color: var(--accent);
 }
+
+/* build footer */
+
+.build-footer {
+  margin-top: 24px;
+  text-align: center;
+  color: #4a4a4a;
+  font-size: 11px;
+}

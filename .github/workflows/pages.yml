@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [claude/poop-app-design-cdoncp]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp build info
+        run: |
+          echo "window.BUILD_INFO = { sha: \"${GITHUB_SHA::7}\", time: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" };" > version.js
       - uses: actions/configure-pages@v5
         with:
           enablement: true

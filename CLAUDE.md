@@ -41,5 +41,5 @@ jednodušší cestu?"
 - Nasazení: GitHub Pages, deploy automaticky přes
   `.github/workflows/pages.yml` při pushi do hlavní větve. URL:
   https://jankoweb.github.io/My.Code.App.Shit/
-- Repo je jednogitbranchové (`claude/poop-app-design-cdoncp` je hlavní
-  i jediná větev) — commituj rovnou do ní, není potřeba PR flow.
+- Hlavní větev je `main`, deploy workflow (`pages.yml`) se spouští při
+  pushi právě do ní.
