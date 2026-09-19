@@ -149,7 +149,6 @@ function loadEntries() {
         stress: clampScale(e.stress, 5),
         tags: Array.isArray(e.tags) ? e.tags : [],
         supplements: Array.isArray(e.supplements) ? e.supplements : [],
-        overateBeforeBed: Boolean(e.overateBeforeBed),
       }));
   } catch {
     return [];
@@ -171,14 +170,10 @@ const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
 const tagsGridEl = $("tagsGrid");
-const overateCheckboxEl = $("overateCheckbox");
 const supplementsGridEl = $("supplementsGrid");
-const urgencySliderEl = $("urgencySlider");
-const urgencyDescEl = $("urgencyDesc");
-const bloatingSliderEl = $("bloatingSlider");
-const bloatingDescEl = $("bloatingDesc");
-const painSliderEl = $("painSlider");
-const painDescEl = $("painDesc");
+const urgencyGroupEl = $("urgencyGroup");
+const bloatingGroupEl = $("bloatingGroup");
+const painGroupEl = $("painGroup");
 const stressSliderEl = $("stressSlider");
 const stressDescEl = $("stressDesc");
 const noteInputEl = $("noteInput");
@@ -235,14 +230,10 @@ const editFoodDateInputEl = $("editFoodDateInput");
 const editFoodTimeInputEl = $("editFoodTimeInput");
 const editFoodDiffEl = $("editFoodDiff");
 const editTagsGridEl = $("editTagsGrid");
-const editOverateCheckboxEl = $("editOverateCheckbox");
 const editSupplementsGridEl = $("editSupplementsGrid");
-const editUrgencySliderEl = $("editUrgencySlider");
-const editUrgencyDescEl = $("editUrgencyDesc");
-const editBloatingSliderEl = $("editBloatingSlider");
-const editBloatingDescEl = $("editBloatingDesc");
-const editPainSliderEl = $("editPainSlider");
-const editPainDescEl = $("editPainDesc");
+const editUrgencyGroupEl = $("editUrgencyGroup");
+const editBloatingGroupEl = $("editBloatingGroup");
+const editPainGroupEl = $("editPainGroup");
 const editStressSliderEl = $("editStressSlider");
 const editStressDescEl = $("editStressDesc");
 const editNoteInputEl = $("editNoteInput");
@@ -294,17 +285,45 @@ function updateScaleDesc(sliderEl, descEl, labels) {
   descEl.textContent = labels[Number(sliderEl.value)] || "";
 }
 
+function createChoiceState(container, labels, initial) {
+  let value = initial;
+  function render() {
+    container.innerHTML = "";
+    Object.keys(labels).forEach((key) => {
+      const num = Number(key);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tag-btn";
+      btn.textContent = labels[key];
+      if (num === value) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        value = num;
+        render();
+      });
+      container.appendChild(btn);
+    });
+  }
+  render();
+  return {
+    get: () => value,
+    set: (v) => {
+      value = v;
+      render();
+    },
+  };
+}
+
+const urgencyChoice = createChoiceState(urgencyGroupEl, URGENCY_LABELS, 1);
+const bloatingChoice = createChoiceState(bloatingGroupEl, BLOATING_LABELS, 1);
+const painChoice = createChoiceState(painGroupEl, PAIN_LABELS, 1);
+const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, URGENCY_LABELS, 1);
+const editBloatingChoice = createChoiceState(editBloatingGroupEl, BLOATING_LABELS, 1);
+const editPainChoice = createChoiceState(editPainGroupEl, PAIN_LABELS, 1);
+
 stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl));
 editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl));
 
-urgencySliderEl.addEventListener("input", () => updateScaleDesc(urgencySliderEl, urgencyDescEl, URGENCY_LABELS));
-bloatingSliderEl.addEventListener("input", () => updateScaleDesc(bloatingSliderEl, bloatingDescEl, BLOATING_LABELS));
-painSliderEl.addEventListener("input", () => updateScaleDesc(painSliderEl, painDescEl, PAIN_LABELS));
 stressSliderEl.addEventListener("input", () => updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS));
-
-editUrgencySliderEl.addEventListener("input", () => updateScaleDesc(editUrgencySliderEl, editUrgencyDescEl, URGENCY_LABELS));
-editBloatingSliderEl.addEventListener("input", () => updateScaleDesc(editBloatingSliderEl, editBloatingDescEl, BLOATING_LABELS));
-editPainSliderEl.addEventListener("input", () => updateScaleDesc(editPainSliderEl, editPainDescEl, PAIN_LABELS));
 editStressSliderEl.addEventListener("input", () => updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS));
 
 stoolTimeInputEl.addEventListener("input", liveColonFormat);
@@ -318,12 +337,9 @@ const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFo
 function resetForm() {
   stoolSliderEl.value = "1";
   updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl);
-  urgencySliderEl.value = "1";
-  updateScaleDesc(urgencySliderEl, urgencyDescEl, URGENCY_LABELS);
-  bloatingSliderEl.value = "1";
-  updateScaleDesc(bloatingSliderEl, bloatingDescEl, BLOATING_LABELS);
-  painSliderEl.value = "1";
-  updateScaleDesc(painSliderEl, painDescEl, PAIN_LABELS);
+  urgencyChoice.set(1);
+  bloatingChoice.set(1);
+  painChoice.set(1);
   stressSliderEl.value = "1";
   updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS);
   const now = new Date();
@@ -334,7 +350,6 @@ function resetForm() {
   updateFormFoodDiff();
   formTags = new Set();
   buildTagButtons(tagsGridEl, TAGS, formTags);
-  overateCheckboxEl.checked = false;
   formSupplements = new Set();
   buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements);
   noteInputEl.value = "";
@@ -359,12 +374,11 @@ function saveNewEntry() {
     date: dateKey(at),
     at: at.toISOString(),
     stoolType: Number(stoolSliderEl.value),
-    urgency: Number(urgencySliderEl.value),
-    bloating: Number(bloatingSliderEl.value),
-    pain: Number(painSliderEl.value),
+    urgency: urgencyChoice.get(),
+    bloating: bloatingChoice.get(),
+    pain: painChoice.get(),
     foodAt: foodAt ? foodAt.toISOString() : null,
     tags: Array.from(formTags),
-    overateBeforeBed: overateCheckboxEl.checked,
     supplements: Array.from(formSupplements),
     stress: Number(stressSliderEl.value),
     note: noteInputEl.value.trim(),
@@ -630,12 +644,9 @@ function openEdit(entry) {
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
   updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl);
-  editUrgencySliderEl.value = String(entry.urgency);
-  updateScaleDesc(editUrgencySliderEl, editUrgencyDescEl, URGENCY_LABELS);
-  editBloatingSliderEl.value = String(entry.bloating);
-  updateScaleDesc(editBloatingSliderEl, editBloatingDescEl, BLOATING_LABELS);
-  editPainSliderEl.value = String(entry.pain);
-  updateScaleDesc(editPainSliderEl, editPainDescEl, PAIN_LABELS);
+  editUrgencyChoice.set(entry.urgency);
+  editBloatingChoice.set(entry.bloating);
+  editPainChoice.set(entry.pain);
   editStressSliderEl.value = String(entry.stress);
   updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS);
   if (entry.foodAt) {
@@ -649,7 +660,6 @@ function openEdit(entry) {
   updateEditFoodDiff();
   editTags = new Set(entry.tags);
   buildTagButtons(editTagsGridEl, TAGS, editTags);
-  editOverateCheckboxEl.checked = Boolean(entry.overateBeforeBed);
   editSupplements = new Set(entry.supplements);
   buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements);
   editNoteInputEl.value = entry.note || "";
@@ -694,12 +704,11 @@ editSaveBtnEl.addEventListener("click", () => {
     date: dateKey(at),
     at: at.toISOString(),
     stoolType: Number(editStoolSliderEl.value),
-    urgency: Number(editUrgencySliderEl.value),
-    bloating: Number(editBloatingSliderEl.value),
-    pain: Number(editPainSliderEl.value),
+    urgency: editUrgencyChoice.get(),
+    bloating: editBloatingChoice.get(),
+    pain: editPainChoice.get(),
     foodAt: foodAt ? foodAt.toISOString() : null,
     tags: Array.from(editTags),
-    overateBeforeBed: editOverateCheckboxEl.checked,
     supplements: Array.from(editSupplements),
     stress: Number(editStressSliderEl.value),
     note: editNoteInputEl.value.trim(),
