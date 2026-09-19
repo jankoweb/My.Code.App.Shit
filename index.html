@@ -12,19 +12,19 @@
 </head>
 <body>
 
-  <div class="topbar">
-    <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
-    <div id="menu" class="menu" hidden>
-      <button id="showStatsBtn" class="menu-item">Přehled</button>
-      <button id="settingsBtn" class="menu-item">Nastavení</button>
-    </div>
-  </div>
-
   <main>
-    <h1 class="app-title">💩</h1>
+    <div class="app-header">
+      <h1 class="app-title">💩</h1>
+      <div class="topbar">
+        <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
+        <div id="menu" class="menu" hidden>
+          <button id="showStatsBtn" class="menu-item">Přehled</button>
+          <button id="settingsBtn" class="menu-item">Nastavení</button>
+        </div>
+      </div>
+    </div>
 
     <div class="stool-block">
-      <div class="stool-value" id="stoolValue">1</div>
       <div class="stool-desc" id="stoolDesc"></div>
       <input type="range" id="stoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
       <div class="stool-scale-labels">
@@ -32,23 +32,29 @@
       </div>
     </div>
 
-    <div class="field-label">Naléhavost</div>
-    <div class="tags-grid tags-grid--choice" id="urgencyGroup"></div>
+    <div class="choice-row">
+      <span class="choice-row-label">Naléhavost</span>
+      <div class="tags-grid tags-grid--choice" id="urgencyGroup"></div>
+    </div>
 
-    <div class="field-label">Nadýmání</div>
-    <div class="tags-grid tags-grid--choice" id="bloatingGroup"></div>
+    <div class="choice-row">
+      <span class="choice-row-label">Nadýmání</span>
+      <div class="tags-grid tags-grid--choice" id="bloatingGroup"></div>
+    </div>
 
-    <div class="field-label">Bolest, křeče</div>
-    <div class="tags-grid tags-grid--choice" id="painGroup"></div>
+    <div class="choice-row">
+      <span class="choice-row-label">Bolest, křeče</span>
+      <div class="tags-grid tags-grid--choice" id="painGroup"></div>
+    </div>
 
-    <div class="field-label">Kdy (stolice)</div>
     <div class="field-row">
+      <span class="field-row-label">Kdy (stolice)</span>
       <input type="text" id="stoolDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
       <input type="text" id="stoolTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
     </div>
 
-    <div class="field-label">Kdy jsi jedl <span class="field-label-hint">(nepovinné)</span></div>
     <div class="field-row">
+      <span class="field-row-label">Jedl <span class="field-label-hint">(nepovinné)</span></span>
       <input type="text" id="foodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
       <input type="text" id="foodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
     </div>
@@ -169,29 +175,34 @@
     <div class="day-detail-card">
       <div class="day-detail-title">Upravit záznam</div>
 
-      <div class="field-label">Kdy (stolice)</div>
       <div class="field-row">
+        <span class="field-row-label">Kdy (stolice)</span>
         <input type="text" id="editDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
         <input type="text" id="editTimeInput" class="edit-field-input" placeholder="HH:MM">
       </div>
 
       <div class="stool-block stool-block--compact">
-        <div class="stool-value" id="editStoolValue">1</div>
         <div class="stool-desc" id="editStoolDesc"></div>
         <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
       </div>
 
-      <div class="field-label">Naléhavost</div>
-      <div class="tags-grid tags-grid--choice" id="editUrgencyGroup"></div>
+      <div class="choice-row">
+        <span class="choice-row-label">Naléhavost</span>
+        <div class="tags-grid tags-grid--choice" id="editUrgencyGroup"></div>
+      </div>
 
-      <div class="field-label">Nadýmání</div>
-      <div class="tags-grid tags-grid--choice" id="editBloatingGroup"></div>
+      <div class="choice-row">
+        <span class="choice-row-label">Nadýmání</span>
+        <div class="tags-grid tags-grid--choice" id="editBloatingGroup"></div>
+      </div>
 
-      <div class="field-label">Bolest, křeče</div>
-      <div class="tags-grid tags-grid--choice" id="editPainGroup"></div>
+      <div class="choice-row">
+        <span class="choice-row-label">Bolest, křeče</span>
+        <div class="tags-grid tags-grid--choice" id="editPainGroup"></div>
+      </div>
 
-      <div class="field-label">Kdy jsi jedl <span class="field-label-hint">(nepovinné)</span></div>
       <div class="field-row">
+        <span class="field-row-label">Jedl <span class="field-label-hint">(nepovinné)</span></span>
         <input type="text" id="editFoodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
         <input type="text" id="editFoodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
       </div>

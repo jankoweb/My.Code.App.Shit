@@ -162,7 +162,6 @@ function saveEntries(entries) {
 // --- elements ---
 
 const stoolSliderEl = $("stoolSlider");
-const stoolValueEl = $("stoolValue");
 const stoolDescEl = $("stoolDesc");
 const stoolDateInputEl = $("stoolDateInput");
 const stoolTimeInputEl = $("stoolTimeInput");
@@ -224,7 +223,6 @@ const editOverlayEl = $("editOverlay");
 const editDateInputEl = $("editDateInput");
 const editTimeInputEl = $("editTimeInput");
 const editStoolSliderEl = $("editStoolSlider");
-const editStoolValueEl = $("editStoolValue");
 const editStoolDescEl = $("editStoolDesc");
 const editFoodDateInputEl = $("editFoodDateInput");
 const editFoodTimeInputEl = $("editFoodTimeInput");
@@ -275,10 +273,8 @@ function buildTagButtons(container, items, tagSet, onChange) {
   });
 }
 
-function updateStoolDisplay(sliderEl, valueEl, descEl) {
-  const v = Number(sliderEl.value);
-  valueEl.textContent = String(v);
-  descEl.textContent = STOOL_LABELS[v] || "";
+function updateStoolDisplay(sliderEl, descEl) {
+  descEl.textContent = STOOL_LABELS[Number(sliderEl.value)] || "";
 }
 
 function updateScaleDesc(sliderEl, descEl, labels) {
@@ -320,8 +316,8 @@ const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, URGENCY_LABELS, 
 const editBloatingChoice = createChoiceState(editBloatingGroupEl, BLOATING_LABELS, 1);
 const editPainChoice = createChoiceState(editPainGroupEl, PAIN_LABELS, 1);
 
-stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl));
-editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl));
+stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolDescEl));
+editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolDescEl));
 
 stressSliderEl.addEventListener("input", () => updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS));
 editStressSliderEl.addEventListener("input", () => updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS));
@@ -336,7 +332,7 @@ const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFo
 
 function resetForm() {
   stoolSliderEl.value = "1";
-  updateStoolDisplay(stoolSliderEl, stoolValueEl, stoolDescEl);
+  updateStoolDisplay(stoolSliderEl, stoolDescEl);
   urgencyChoice.set(1);
   bloatingChoice.set(1);
   painChoice.set(1);
@@ -643,7 +639,7 @@ function openEdit(entry) {
   editDateInputEl.value = formatCzechDate(d);
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
-  updateStoolDisplay(editStoolSliderEl, editStoolValueEl, editStoolDescEl);
+  updateStoolDisplay(editStoolSliderEl, editStoolDescEl);
   editUrgencyChoice.set(entry.urgency);
   editBloatingChoice.set(entry.bloating);
   editPainChoice.set(entry.pain);
