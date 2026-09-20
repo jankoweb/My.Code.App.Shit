@@ -18,7 +18,8 @@ const TAGS = [
   { key: "sul", emoji: "🧂", label: "Sůl" },
   { key: "tuk", emoji: "🧈", label: "Tuk" },
   { key: "tucne", emoji: "🍟", label: "Smažené" },
-  { key: "vlaknina", emoji: "🌾", label: "Vláknina" },
+  { key: "psenice", emoji: "🌾", label: "Pšenice" },
+  { key: "vlaknina", emoji: "🍎", label: "Vláknina" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
   { key: "korenene", emoji: "🌿", label: "Kořeněné" },
@@ -113,7 +114,7 @@ function formatDiffHuman(stoolDate, foodDate) {
 function wireFoodDiff(stoolDateEl, stoolTimeEl, foodDateEl, foodTimeEl, diffEl) {
   function update() {
     const stoolAt = parseDateTime(stoolDateEl.value, stoolTimeEl.value);
-    const foodAt = foodDateEl.value.trim() || foodTimeEl.value.trim() ? parseDateTime(foodDateEl.value, foodTimeEl.value) : null;
+    const foodAt = foodTimeEl.value.trim() ? parseDateTime(foodDateEl.value, foodTimeEl.value) : null;
     if (!stoolAt || !foodAt) {
       diffEl.hidden = true;
       diffEl.textContent = "";
@@ -380,7 +381,7 @@ function resetForm() {
   const now = new Date();
   stoolDateInputEl.value = formatCzechDate(now);
   stoolTimeInputEl.value = formatHHMM(now);
-  foodDateInputEl.value = "";
+  foodDateInputEl.value = formatCzechDate(now);
   foodTimeInputEl.value = "";
   updateFormFoodDiff();
   formTags = new Set();
@@ -397,7 +398,7 @@ function saveNewEntry() {
     return;
   }
   let foodAt = null;
-  if (foodDateInputEl.value.trim() || foodTimeInputEl.value.trim()) {
+  if (foodTimeInputEl.value.trim()) {
     foodAt = parseDateTime(foodDateInputEl.value, foodTimeInputEl.value);
     if (!foodAt) {
       alert("Neplatné datum nebo čas jídla.");
@@ -801,7 +802,7 @@ editSaveBtnEl.addEventListener("click", () => {
   }
   const at = new Date(dateParsed.year, dateParsed.month - 1, dateParsed.day, timeParsed.h, timeParsed.m, 0);
   let foodAt = null;
-  if (editFoodDateInputEl.value.trim() || editFoodTimeInputEl.value.trim()) {
+  if (editFoodTimeInputEl.value.trim()) {
     foodAt = parseDateTime(editFoodDateInputEl.value, editFoodTimeInputEl.value);
     if (!foodAt) {
       alert("Neplatné datum nebo čas jídla.");
