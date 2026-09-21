@@ -15,6 +15,10 @@
   <main>
     <div class="app-header">
       <h1 class="app-title">💩</h1>
+      <div class="app-header-datetime">
+        <input type="text" id="stoolDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
+        <input type="text" id="stoolTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+      </div>
       <div class="topbar">
         <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
         <div id="menu" class="menu" hidden>
@@ -48,23 +52,18 @@
     </div>
 
     <div class="field-row">
-      <span class="field-row-label">Kdy (stolice)</span>
-      <input type="text" id="stoolDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
-      <input type="text" id="stoolTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
-    </div>
-
-    <div class="field-row">
-      <span class="field-row-label">Jedl <span class="field-label-hint">(nepovinné)</span></span>
+      <span class="field-row-label">Jídlo <span class="field-label-hint">(nepovinné)</span></span>
       <input type="text" id="foodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
       <input type="text" id="foodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
     </div>
     <div id="foodDiff" class="food-diff" hidden></div>
 
-    <div class="field-label">Jídlo</div>
     <div class="tags-grid" id="tagsGrid"></div>
 
-    <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
-    <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
+    <div class="choice-row">
+      <span class="choice-row-label">Doplňky <span class="field-label-hint">(nepovinné)</span></span>
+      <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
+    </div>
 
     <div class="scale-block">
       <div class="scale-row">
@@ -89,13 +88,13 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat" data-hint="Počet záznamů zapsaných dnes.">
-        <div class="stat-value" id="todayCountStat">–</div>
+      <div class="stat" data-hint="Průměrná konzistence stolice dnes (1 tvarovaná – 5 vodnatá).">
+        <div class="stat-value" id="todayAvgStat">–</div>
         <div class="stat-label">dnes</div>
       </div>
-      <div class="stat" data-hint="Počet všech záznamů od začátku.">
-        <div class="stat-value" id="totalCountStat">–</div>
-        <div class="stat-label">celkem</div>
+      <div class="stat" data-hint="Průměrná konzistence stolice včera (1 tvarovaná – 5 vodnatá).">
+        <div class="stat-value" id="yesterdayAvgStat">–</div>
+        <div class="stat-label">včera</div>
       </div>
       <div class="stat" data-hint="Průměrná konzistence stolice za měsíc (1 tvarovaná – 5 vodnatá).">
         <div class="stat-value" id="avgTypeStat">–</div>
