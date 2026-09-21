@@ -13,30 +13,61 @@ const BLOATING_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
 const PAIN_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
 const STRESS_LABELS = { 1: "Žádný", 2: "Mírný", 3: "Střední", 4: "Vysoký", 5: "Velmi vysoký" };
 
+// Tags on the entry screen are food items (fast to recognize & tap).
+// Internally each maps to one or more underlying components, so charts and
+// correlations can still group e.g. "fat" or "gas-inducing" across different
+// foods instead of tracking every food item as an isolated bucket.
 const TAGS = [
-  { key: "cukr", emoji: "🍬", label: "Cukr" },
-  { key: "sul", emoji: "🧂", label: "Sůl" },
-  { key: "tuk", emoji: "🧈", label: "Tuk" },
-  { key: "tucne", emoji: "🍟", label: "Smažené" },
-  { key: "psenice", emoji: "🌾", label: "Pšenice" },
-  { key: "vlaknina", emoji: "🍎", label: "Vláknina" },
+  { key: "syry", emoji: "🧀", label: "Sýry" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
+  { key: "uzeniny", emoji: "🍖", label: "Uzeniny" },
+  { key: "smazene", emoji: "🍟", label: "Smažené" },
+  { key: "sladke", emoji: "🍫", label: "Sladké" },
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
-  { key: "korenene", emoji: "🌿", label: "Kořeněné" },
+  { key: "cibule", emoji: "🧅", label: "Cibule" },
+  { key: "nakladane", emoji: "🫙", label: "Nakládané" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
-  { key: "alkohol", emoji: "🍺", label: "Alkohol" },
-  { key: "prejedeni", emoji: "🍽️", label: "Přejedení" },
-  { key: "nadymave", emoji: "💨", label: "Nadýmavé" },
   { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
+const TAG_COMPONENTS = {
+  syry: ["tuk", "mlecne"],
+  mlecne: ["mlecne"],
+  uzeniny: ["tuk", "sul"],
+  smazene: ["smazene", "tuk"],
+  sladke: ["sladke"],
+  palive: ["palive"],
+  cibule: ["nadymave"],
+  nakladane: ["sul", "nadymave"],
+  kofein: ["kofein"],
+  neobvykle: ["neobvykle"],
+};
+
+const COMPONENTS = [
+  { key: "tuk", emoji: "🧈", label: "Tuk" },
+  { key: "mlecne", emoji: "🥛", label: "Mléčné" },
+  { key: "sul", emoji: "🧂", label: "Sůl" },
+  { key: "smazene", emoji: "🍟", label: "Smažené" },
+  { key: "sladke", emoji: "🍫", label: "Sladké" },
+  { key: "palive", emoji: "🌶️", label: "Pálivé" },
+  { key: "nadymave", emoji: "💨", label: "Nadýmavé" },
+  { key: "kofein", emoji: "☕", label: "Kofein" },
+  { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
+];
+
+function entryComponents(entry) {
+  const set = new Set();
+  (entry.tags || []).forEach((tagKey) => TAG_COMPONENTS[tagKey].forEach((c) => set.add(c)));
+  return set;
+}
+
 const SUPPLEMENTS = [
-  { key: "c", emoji: "💊", label: "C" },
-  { key: "mg", emoji: "💊", label: "Mg" },
-  { key: "zn", emoji: "💊", label: "Zn" },
-  { key: "d", emoji: "💊", label: "D" },
-  { key: "b", emoji: "💊", label: "B" },
-  { key: "e", emoji: "💊", label: "E" },
+  { key: "c", emoji: "🍊", label: "C" },
+  { key: "mg", emoji: "🥜", label: "Mg" },
+  { key: "zn", emoji: "🦪", label: "Zn" },
+  { key: "d", emoji: "☀️", label: "D" },
+  { key: "b", emoji: "⚡", label: "B" },
+  { key: "e", emoji: "🫒", label: "E" },
 ];
 
 const MONTH_NAMES = [
@@ -56,6 +87,12 @@ function dateKey(d) {
 
 function todayKey() {
   return dateKey(new Date());
+}
+
+function yesterdayKey() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return dateKey(d);
 }
 
 function formatHHMM(d) {
@@ -192,8 +229,8 @@ const settingsViewEl = $("settingsView");
 const statsBackEl = $("statsBack");
 const settingsBackEl = $("settingsBack");
 
-const todayCountStatEl = $("todayCountStat");
-const totalCountStatEl = $("totalCountStat");
+const todayAvgStatEl = $("todayAvgStat");
+const yesterdayAvgStatEl = $("yesterdayAvgStat");
 const avgTypeStatEl = $("avgTypeStat");
 const monthPrevEl = $("monthPrev");
 const monthNextEl = $("monthNext");
@@ -600,8 +637,14 @@ function renderStats() {
   const filteredEntries = filterActive ? entries.filter((e) => e.stoolType === statsStoolFilter) : entries;
   const filteredMonthEntries = filterActive ? monthEntries.filter((e) => e.stoolType === statsStoolFilter) : monthEntries;
 
-  todayCountStatEl.textContent = String(filteredEntries.filter((e) => e.date === todayKey()).length);
-  totalCountStatEl.textContent = String(filteredEntries.length);
+  const todayEntries = filteredEntries.filter((e) => e.date === todayKey());
+  todayAvgStatEl.textContent = todayEntries.length
+    ? (todayEntries.reduce((sum, e) => sum + e.stoolType, 0) / todayEntries.length).toFixed(1)
+    : "–";
+  const yesterdayEntries = filteredEntries.filter((e) => e.date === yesterdayKey());
+  yesterdayAvgStatEl.textContent = yesterdayEntries.length
+    ? (yesterdayEntries.reduce((sum, e) => sum + e.stoolType, 0) / yesterdayEntries.length).toFixed(1)
+    : "–";
   avgTypeStatEl.textContent = filteredMonthEntries.length
     ? (filteredMonthEntries.reduce((sum, e) => sum + e.stoolType, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
@@ -623,8 +666,7 @@ function renderStats() {
   const typeValues = [1, 2, 3, 4, 5].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
   renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a", {
     activeIndex: filterActive ? statsStoolFilter - 1 : null,
-    onClick: (i, v, el) => {
-      showTooltip(el, `${STOOL_LABELS[i + 1]} · ${v}×`);
+    onClick: (i, v) => {
       const clicked = i + 1;
       statsStoolFilter = statsStoolFilter === clicked ? null : clicked;
       renderStats();
@@ -633,7 +675,7 @@ function renderStats() {
   renderLabels(typeChartLabelsEl, ["1", "2", "3", "4", "5"]);
   if (filterActive) {
     typeHintEl.hidden = false;
-    typeHintEl.textContent = `Filtr: typ ${statsStoolFilter} · ${filteredMonthEntries.length}× tento měsíc (klikni znovu pro zrušení)`;
+    typeHintEl.textContent = `${statsStoolFilter} – ${STOOL_LABELS[statsStoolFilter]} · ${filteredMonthEntries.length}× tento měsíc (klikni znovu pro zrušení)`;
   } else {
     typeHintEl.hidden = true;
   }
@@ -652,12 +694,12 @@ function renderStats() {
   });
   renderLabels(chartLabelsEl, dayLabels);
 
-  // tag frequency
-  const tagValues = TAGS.map((tag) => filteredMonthEntries.filter((e) => e.tags.includes(tag.key)).length);
+  // component frequency (tags expanded to underlying components, e.g. Sýry -> Tuk, Mléčné)
+  const tagValues = COMPONENTS.map((c) => filteredMonthEntries.filter((e) => entryComponents(e).has(c.key)).length);
   renderBars(chartTagsEl, yAxisTagsEl, tagValues, "#ffca28", {
-    onClick: (i, v, el) => showTooltip(el, `${TAGS[i].emoji} ${TAGS[i].label}: ${v}×`),
+    onClick: (i, v, el) => showTooltip(el, `${COMPONENTS[i].emoji} ${COMPONENTS[i].label}: ${v}×`),
   });
-  renderLabels(tagChartLabelsEl, TAGS.map((t) => t.emoji));
+  renderLabels(tagChartLabelsEl, COMPONENTS.map((c) => c.emoji));
 
   // supplement frequency
   const supplementValues = SUPPLEMENTS.map((s) => filteredMonthEntries.filter((e) => e.supplements.includes(s.key)).length);
@@ -673,13 +715,13 @@ function renderStats() {
 function renderCorrelation(entries) {
   correlationListEl.innerHTML = "";
   const rows = [];
-  TAGS.forEach((tag) => {
-    const withTag = entries.filter((e) => e.tags.includes(tag.key));
-    const withoutTag = entries.filter((e) => !e.tags.includes(tag.key));
+  COMPONENTS.forEach((component) => {
+    const withTag = entries.filter((e) => entryComponents(e).has(component.key));
+    const withoutTag = entries.filter((e) => !entryComponents(e).has(component.key));
     if (withTag.length < 3 || withoutTag.length === 0) return;
     const avgWith = withTag.reduce((s, e) => s + e.stoolType, 0) / withTag.length;
     const avgWithout = withoutTag.reduce((s, e) => s + e.stoolType, 0) / withoutTag.length;
-    rows.push({ tag, avgWith, avgWithout, count: withTag.length, diff: avgWith - avgWithout });
+    rows.push({ tag: component, avgWith, avgWithout, count: withTag.length, diff: avgWith - avgWithout });
   });
 
   if (!rows.length) {

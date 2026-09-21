@@ -40,12 +40,30 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
 .app-title {
   font-size: 26px;
   margin: 0;
+  flex: 0 0 auto;
+}
+
+.app-header-datetime {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-header-datetime .edit-field-input {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+  padding: 8px 6px;
+  font-size: 13px;
+  text-align: center;
 }
 
 /* topbar / menu */
@@ -222,9 +240,17 @@ main {
   color: var(--muted);
 }
 
-.choice-row .tags-grid--choice {
+.choice-row .tags-grid--choice,
+.choice-row .tags-grid--compact {
   flex: 1;
   margin-bottom: 0;
+}
+
+.choice-row .tags-grid--compact .tag-btn {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .food-diff {
@@ -425,12 +451,14 @@ main {
 }
 
 .chart-title {
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
   margin-bottom: 6px;
 }
 
 .chart-unit {
+  font-weight: 400;
   color: #5a5a5a;
 }
 
@@ -543,10 +571,11 @@ main {
 }
 
 .settings-section-title {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted);
+  color: var(--fg);
   border-top: 2px solid var(--line);
   padding-top: 14px;
   margin: 20px 0 10px;
