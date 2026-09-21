@@ -21,8 +21,8 @@ const TAGS = [
   { key: "syry", emoji: "🧀", label: "Sýry" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
   { key: "uzeniny", emoji: "🍖", label: "Uzeniny" },
-  { key: "tucne", emoji: "🍟", label: "Smažené" },
-  { key: "cukr", emoji: "🍫", label: "Sladké" },
+  { key: "smazene", emoji: "🍟", label: "Smažené" },
+  { key: "sladke", emoji: "🍫", label: "Sladké" },
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
   { key: "cibule", emoji: "🧅", label: "Cibule" },
   { key: "nakladane", emoji: "🫙", label: "Nakládané" },
@@ -34,8 +34,8 @@ const TAG_COMPONENTS = {
   syry: ["tuk", "mlecne"],
   mlecne: ["mlecne"],
   uzeniny: ["tuk", "sul"],
-  tucne: ["tucne", "tuk"],
-  cukr: ["cukr"],
+  smazene: ["smazene", "tuk"],
+  sladke: ["sladke"],
   palive: ["palive"],
   cibule: ["nadymave"],
   nakladane: ["sul", "nadymave"],
@@ -47,8 +47,8 @@ const COMPONENTS = [
   { key: "tuk", emoji: "🧈", label: "Tuk" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné" },
   { key: "sul", emoji: "🧂", label: "Sůl" },
-  { key: "tucne", emoji: "🍟", label: "Smažené" },
-  { key: "cukr", emoji: "🍫", label: "Sladké" },
+  { key: "smazene", emoji: "🍟", label: "Smažené" },
+  { key: "sladke", emoji: "🍫", label: "Sladké" },
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
   { key: "nadymave", emoji: "💨", label: "Nadýmavé" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
@@ -57,9 +57,7 @@ const COMPONENTS = [
 
 function entryComponents(entry) {
   const set = new Set();
-  (entry.tags || []).forEach((tagKey) => {
-    (TAG_COMPONENTS[tagKey] || [tagKey]).forEach((c) => set.add(c));
-  });
+  (entry.tags || []).forEach((tagKey) => TAG_COMPONENTS[tagKey].forEach((c) => set.add(c)));
   return set;
 }
 
