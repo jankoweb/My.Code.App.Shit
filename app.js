@@ -100,18 +100,22 @@ function formatHHMM(d) {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-function liveColonFormat(e) {
-  const el = e.target;
-  const pos = el.selectionStart;
-  const withColons = el.value.replace(/[,.]/g, ":");
-  if (withColons !== el.value) {
-    el.value = withColons;
-    el.setSelectionRange(pos, pos);
-  }
+// Native <input type="date"> / <input type="time"> always report their
+// value as YYYY-MM-DD / HH:MM (or "" when empty) regardless of device
+// locale or keyboard, so parsing here is just format validation — no
+// free-text guessing like the old DD.MM.RRRR text fields needed.
+function parseDateInputValue(text) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((text || "").trim());
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return { day, month, year };
 }
 
-function parse24Time(text) {
-  const m = /^(\d{1,2}):(\d{2})$/.exec((text || "").trim());
+function parseTimeInputValue(text) {
+  const m = /^(\d{2}):(\d{2})$/.exec((text || "").trim());
   if (!m) return null;
   const h = Number(m[1]);
   const min = Number(m[2]);
@@ -123,19 +127,9 @@ function formatCzechDate(d) {
   return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-function parseCzechDate(text) {
-  const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec((text || "").trim());
-  if (!m) return null;
-  const day = Number(m[1]);
-  const month = Number(m[2]);
-  const year = Number(m[3]);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return { day, month, year };
-}
-
 function parseDateTime(dateText, timeText) {
-  const d = parseCzechDate(dateText);
-  const t = parse24Time(timeText);
+  const d = parseDateInputValue(dateText);
+  const t = parseTimeInputValue(timeText);
   if (!d || !t) return null;
   return new Date(d.year, d.month - 1, d.day, t.h, t.m, 0);
 }
@@ -219,6 +213,7 @@ const stressSliderEl = $("stressSlider");
 const stressDescEl = $("stressDesc");
 const noteInputEl = $("noteInput");
 const saveBtnEl = $("saveBtn");
+const formErrorEl = $("formError");
 
 const menuBtnEl = $("menuBtn");
 const menuEl = $("menu");
@@ -283,6 +278,7 @@ const editPainGroupEl = $("editPainGroup");
 const editStressSliderEl = $("editStressSlider");
 const editStressDescEl = $("editStressDesc");
 const editNoteInputEl = $("editNoteInput");
+const editFormErrorEl = $("editFormError");
 const editDeleteBtnEl = $("editDeleteBtn");
 const editCancelBtnEl = $("editCancelBtn");
 const editSaveBtnEl = $("editSaveBtn");
@@ -370,11 +366,6 @@ editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSl
 stressSliderEl.addEventListener("input", () => updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS));
 editStressSliderEl.addEventListener("input", () => updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS));
 
-stoolTimeInputEl.addEventListener("input", liveColonFormat);
-foodTimeInputEl.addEventListener("input", liveColonFormat);
-editTimeInputEl.addEventListener("input", liveColonFormat);
-editFoodTimeInputEl.addEventListener("input", liveColonFormat);
-
 // --- edit overlay: track unsaved changes ---
 
 let editSnapshot = null;
@@ -408,6 +399,19 @@ function updateEditSaveState() {
 const updateFormFoodDiff = wireFoodDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
 const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
 
+// window.alert() is silently inert in an installed Android PWA (standalone
+// display mode) — the call returns immediately and nothing appears, so a
+// validation failure looked like the Uložit button "doing nothing". Errors
+// have to be shown in the page itself instead.
+function showFormError(el, message) {
+  el.textContent = message;
+  el.hidden = false;
+}
+
+function hideFormError(el) {
+  el.hidden = true;
+}
+
 function resetForm() {
   stoolSliderEl.value = "1";
   updateStoolDisplay(stoolSliderEl, stoolDescEl);
@@ -417,11 +421,12 @@ function resetForm() {
   stressSliderEl.value = "1";
   updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS);
   const now = new Date();
-  stoolDateInputEl.value = formatCzechDate(now);
+  stoolDateInputEl.value = dateKey(now);
   stoolTimeInputEl.value = formatHHMM(now);
-  foodDateInputEl.value = formatCzechDate(now);
+  foodDateInputEl.value = dateKey(now);
   foodTimeInputEl.value = "";
   updateFormFoodDiff();
+  hideFormError(formErrorEl);
   formTags = new Set();
   buildTagButtons(tagsGridEl, TAGS, formTags);
   formSupplements = new Set();
@@ -432,17 +437,18 @@ function resetForm() {
 function saveNewEntry() {
   const at = parseDateTime(stoolDateInputEl.value, stoolTimeInputEl.value);
   if (!at) {
-    alert("Neplatné datum nebo čas stolice.");
+    showFormError(formErrorEl, "Chybí datum nebo čas stolice — doplň je nahoře vedle ikony appky.");
     return;
   }
   let foodAt = null;
   if (foodTimeInputEl.value.trim()) {
     foodAt = parseDateTime(foodDateInputEl.value, foodTimeInputEl.value);
     if (!foodAt) {
-      alert("Neplatné datum nebo čas jídla.");
+      showFormError(formErrorEl, "Chybí datum jídla — čas jídla je vyplněný, ale datum ne.");
       return;
     }
   }
+  hideFormError(formErrorEl);
   const entry = {
     id: `${at.toISOString()}-${Math.random().toString(36).slice(2, 7)}`,
     date: dateKey(at),
@@ -795,7 +801,7 @@ historyNextEl.addEventListener("click", () => {
 function openEdit(entry) {
   editingId = entry.id;
   const d = new Date(entry.at);
-  editDateInputEl.value = formatCzechDate(d);
+  editDateInputEl.value = dateKey(d);
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
   updateStoolDisplay(editStoolSliderEl, editStoolDescEl);
@@ -806,7 +812,7 @@ function openEdit(entry) {
   updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS);
   if (entry.foodAt) {
     const fd = new Date(entry.foodAt);
-    editFoodDateInputEl.value = formatCzechDate(fd);
+    editFoodDateInputEl.value = dateKey(fd);
     editFoodTimeInputEl.value = formatHHMM(fd);
   } else {
     editFoodDateInputEl.value = "";
@@ -821,6 +827,8 @@ function openEdit(entry) {
   editOverlayEl.hidden = false;
   editSnapshot = getEditFormState();
   updateEditSaveState();
+  hideFormError(editFormErrorEl);
+  resetDeleteArmed();
 }
 
 function closeEdit() {
@@ -832,14 +840,14 @@ function closeEdit() {
 editCancelBtnEl.addEventListener("click", closeEdit);
 
 editSaveBtnEl.addEventListener("click", () => {
-  const dateParsed = parseCzechDate(editDateInputEl.value);
-  const timeParsed = parse24Time(editTimeInputEl.value);
+  const dateParsed = parseDateInputValue(editDateInputEl.value);
+  const timeParsed = parseTimeInputValue(editTimeInputEl.value);
   if (!dateParsed) {
-    alert("Neplatné datum, zadej ve tvaru DD.MM.RRRR.");
+    showFormError(editFormErrorEl, "Chybí datum stolice.");
     return;
   }
   if (!timeParsed) {
-    alert("Neplatný čas, zadej ve tvaru HH:MM.");
+    showFormError(editFormErrorEl, "Chybí čas stolice.");
     return;
   }
   const at = new Date(dateParsed.year, dateParsed.month - 1, dateParsed.day, timeParsed.h, timeParsed.m, 0);
@@ -847,10 +855,11 @@ editSaveBtnEl.addEventListener("click", () => {
   if (editFoodTimeInputEl.value.trim()) {
     foodAt = parseDateTime(editFoodDateInputEl.value, editFoodTimeInputEl.value);
     if (!foodAt) {
-      alert("Neplatné datum nebo čas jídla.");
+      showFormError(editFormErrorEl, "Chybí datum jídla — čas jídla je vyplněný, ale datum ne.");
       return;
     }
   }
+  hideFormError(editFormErrorEl);
   const entries = loadEntries();
   const idx = entries.findIndex((e) => e.id === editingId);
   if (idx === -1) {
@@ -876,8 +885,23 @@ editSaveBtnEl.addEventListener("click", () => {
   renderStats();
 });
 
+// window.confirm() is silently inert in an installed Android PWA, same as
+// alert() — a delete guarded only by confirm() could otherwise go through
+// (or silently never trigger) with no visible prompt at all. Two taps here
+// instead of a dialog works everywhere.
+let deleteArmed = false;
+
+function resetDeleteArmed() {
+  deleteArmed = false;
+  editDeleteBtnEl.textContent = "Smazat";
+}
+
 editDeleteBtnEl.addEventListener("click", () => {
-  if (!confirm("Smazat tenhle záznam?")) return;
+  if (!deleteArmed) {
+    deleteArmed = true;
+    editDeleteBtnEl.textContent = "Opravdu smazat?";
+    return;
+  }
   const entries = loadEntries().filter((e) => e.id !== editingId);
   saveEntries(entries);
   closeEdit();

@@ -16,8 +16,8 @@
     <div class="app-header">
       <h1 class="app-title">💩</h1>
       <div class="app-header-datetime">
-        <input type="text" id="stoolDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
-        <input type="text" id="stoolTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+        <input type="date" id="stoolDateInput" class="edit-field-input">
+        <input type="time" id="stoolTimeInput" class="edit-field-input">
       </div>
       <div class="topbar">
         <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
@@ -53,8 +53,8 @@
 
     <div class="field-row">
       <span class="field-row-label">Jídlo <span class="field-label-hint">(nepovinné)</span></span>
-      <input type="text" id="foodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
-      <input type="text" id="foodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+      <input type="date" id="foodDateInput" class="edit-field-input">
+      <input type="time" id="foodTimeInput" class="edit-field-input">
     </div>
     <div id="foodDiff" class="food-diff" hidden></div>
 
@@ -76,6 +76,7 @@
     <label class="field-label" for="noteInput">Poznámka</label>
     <textarea id="noteInput" class="note-input" maxlength="240" rows="2"></textarea>
 
+    <div id="formError" class="form-error" hidden></div>
     <button id="saveBtn" class="save-btn">Uložit</button>
 
     <div id="buildFooter" class="build-footer"></div>
@@ -182,8 +183,8 @@
 
       <div class="field-row">
         <span class="field-row-label">Kdy (stolice)</span>
-        <input type="text" id="editDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
-        <input type="text" id="editTimeInput" class="edit-field-input" placeholder="HH:MM">
+        <input type="date" id="editDateInput" class="edit-field-input">
+        <input type="time" id="editTimeInput" class="edit-field-input">
       </div>
 
       <div class="stool-block stool-block--compact">
@@ -208,8 +209,8 @@
 
       <div class="field-row">
         <span class="field-row-label">Jedl <span class="field-label-hint">(nepovinné)</span></span>
-        <input type="text" id="editFoodDateInput" class="edit-field-input" placeholder="DD.MM.RRRR">
-        <input type="text" id="editFoodTimeInput" class="edit-field-input" inputmode="decimal" placeholder="HH:MM">
+        <input type="date" id="editFoodDateInput" class="edit-field-input">
+        <input type="time" id="editFoodTimeInput" class="edit-field-input">
       </div>
       <div id="editFoodDiff" class="food-diff" hidden></div>
 
@@ -227,6 +228,8 @@
       </div>
 
       <textarea id="editNoteInput" class="note-input edit-note-input" maxlength="240" rows="2" placeholder="poznámka"></textarea>
+
+      <div id="editFormError" class="form-error" hidden></div>
 
       <div class="guess-actions edit-actions">
         <button id="editDeleteBtn" class="day-detail-delete-full">Smazat</button>

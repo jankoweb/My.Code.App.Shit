@@ -221,7 +221,7 @@ main {
 
 .field-row .edit-field-input {
   flex: 1;
-  min-width: 90px;
+  min-width: 130px;
   margin-bottom: 0;
   padding: 8px;
 }
@@ -261,6 +261,16 @@ main {
 
 .food-diff--warn {
   color: var(--accent);
+}
+
+.form-error {
+  background: rgba(255, 82, 82, 0.12);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
 }
 
 .time-input,
