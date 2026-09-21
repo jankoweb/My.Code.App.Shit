@@ -399,6 +399,18 @@ function updateEditSaveState() {
 const updateFormFoodDiff = wireFoodDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
 const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
 
+// Food date/time is optional and starts empty — a date sitting there with no
+// time doesn't mean anything, so it's only worth defaulting once the time is
+// actually set (to today, the common case).
+function fillFoodDateOnTime(dateEl, timeEl) {
+  timeEl.addEventListener("input", () => {
+    if (timeEl.value && !dateEl.value) dateEl.value = dateKey(new Date());
+  });
+}
+
+fillFoodDateOnTime(foodDateInputEl, foodTimeInputEl);
+fillFoodDateOnTime(editFoodDateInputEl, editFoodTimeInputEl);
+
 // window.alert() is silently inert in an installed Android PWA (standalone
 // display mode) — the call returns immediately and nothing appears, so a
 // validation failure looked like the Uložit button "doing nothing". Errors
@@ -423,7 +435,7 @@ function resetForm() {
   const now = new Date();
   stoolDateInputEl.value = dateKey(now);
   stoolTimeInputEl.value = formatHHMM(now);
-  foodDateInputEl.value = dateKey(now);
+  foodDateInputEl.value = "";
   foodTimeInputEl.value = "";
   updateFormFoodDiff();
   hideFormError(formErrorEl);
