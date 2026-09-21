@@ -1,6 +1,7 @@
 const STORAGE_KEY = "shit-app-entries";
 
 const STOOL_LABELS = {
+  0: "Pevný doutník – ideální tvar",
   1: "Tvarovaná – pevná, normální",
   2: "Měkká – drží tvar",
   3: "Kašovitá – nedrží tvar",
@@ -183,7 +184,7 @@ function loadEntries() {
       )
       .map((e) => ({
         ...e,
-        stoolType: Math.min(5, Math.max(1, e.stoolType)),
+        stoolType: Math.min(5, Math.max(0, e.stoolType)),
         urgency: clampScale(e.urgency, 3),
         bloating: clampScale(e.bloating, 3),
         pain: clampScale(e.pain, 3),
@@ -525,7 +526,7 @@ settingsBackEl.addEventListener("click", goBack);
 // --- stats view ---
 
 let statsMonth = null; // {year, month} month = 0-indexed
-let statsStoolFilter = null; // 1-5 or null
+let statsStoolFilter = null; // 0-5 or null
 let historyPage = 0;
 
 function openStatsView() {
@@ -663,16 +664,15 @@ function renderStats() {
 
   // stool consistency distribution — always shows the full month (it's the
   // filter control itself); clicking a bar toggles the filter
-  const typeValues = [1, 2, 3, 4, 5].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
+  const typeValues = [0, 1, 2, 3, 4, 5].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
   renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a", {
-    activeIndex: filterActive ? statsStoolFilter - 1 : null,
+    activeIndex: filterActive ? statsStoolFilter : null,
     onClick: (i, v) => {
-      const clicked = i + 1;
-      statsStoolFilter = statsStoolFilter === clicked ? null : clicked;
+      statsStoolFilter = statsStoolFilter === i ? null : i;
       renderStats();
     },
   });
-  renderLabels(typeChartLabelsEl, ["1", "2", "3", "4", "5"]);
+  renderLabels(typeChartLabelsEl, ["0", "1", "2", "3", "4", "5"]);
   if (filterActive) {
     typeHintEl.hidden = false;
     typeHintEl.textContent = `${statsStoolFilter} – ${STOOL_LABELS[statsStoolFilter]} · ${filteredMonthEntries.length}× tento měsíc (klikni znovu pro zrušení)`;

@@ -30,9 +30,9 @@
 
     <div class="stool-block">
       <div class="stool-desc" id="stoolDesc"></div>
-      <input type="range" id="stoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
+      <input type="range" id="stoolSlider" class="stool-slider" min="0" max="5" step="1" value="1">
       <div class="stool-scale-labels">
-        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
       </div>
     </div>
 
@@ -88,15 +88,15 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat" data-hint="Průměrná konzistence stolice dnes (1 tvarovaná – 5 vodnatá).">
+      <div class="stat" data-hint="Průměrná konzistence stolice dnes (0 pevný doutník – 5 vodnatá).">
         <div class="stat-value" id="todayAvgStat">–</div>
         <div class="stat-label">dnes</div>
       </div>
-      <div class="stat" data-hint="Průměrná konzistence stolice včera (1 tvarovaná – 5 vodnatá).">
+      <div class="stat" data-hint="Průměrná konzistence stolice včera (0 pevný doutník – 5 vodnatá).">
         <div class="stat-value" id="yesterdayAvgStat">–</div>
         <div class="stat-label">včera</div>
       </div>
-      <div class="stat" data-hint="Průměrná konzistence stolice za měsíc (1 tvarovaná – 5 vodnatá).">
+      <div class="stat" data-hint="Průměrná konzistence stolice za měsíc (0 pevný doutník – 5 vodnatá).">
         <div class="stat-value" id="avgTypeStat">–</div>
         <div class="stat-label">Ø konzist. (měsíc)</div>
       </div>
@@ -128,7 +128,7 @@
     </div>
 
     <div class="chart-block">
-      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(1–5, klik = filtr)</span></div>
+      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(0–5, klik = filtr)</span></div>
       <div class="chart-row">
         <div class="chart-yaxis" id="yAxisType"><span></span><span>0</span></div>
         <div class="chart-bars" id="chartType"></div>
@@ -188,7 +188,7 @@
 
       <div class="stool-block stool-block--compact">
         <div class="stool-desc" id="editStoolDesc"></div>
-        <input type="range" id="editStoolSlider" class="stool-slider" min="1" max="5" step="1" value="1">
+        <input type="range" id="editStoolSlider" class="stool-slider" min="0" max="5" step="1" value="1">
       </div>
 
       <div class="choice-row">
