@@ -15,10 +15,7 @@
   <main>
     <div class="app-header">
       <h1 class="app-title">💩</h1>
-      <div class="app-header-datetime" id="stoolDateTimeWrap" hidden>
-        <input type="date" id="stoolDateInput" class="edit-field-input">
-        <input type="time" id="stoolTimeInput" class="edit-field-input">
-      </div>
+      <button type="button" id="stoolDateTimeToggleBtn" class="collapse-toggle">Kdy</button>
       <div class="topbar">
         <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
         <div id="menu" class="menu" hidden>
@@ -28,20 +25,14 @@
       </div>
     </div>
 
-    <div class="scale-block">
-      <div class="scale-row">
-        <span class="scale-label">Stres <span class="field-label-hint">(nepovinné)</span></span>
-        <span class="scale-value" id="stressDesc"></span>
-      </div>
-      <input type="range" id="stressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+    <div class="app-header-datetime" id="stoolDateTimeWrap" hidden>
+      <input type="date" id="stoolDateInput" class="edit-field-input">
+      <input type="time" id="stoolTimeInput" class="edit-field-input">
     </div>
 
     <div class="stool-block">
       <div class="stool-desc" id="stoolDesc"></div>
-      <input type="range" id="stoolSlider" class="stool-slider" min="0" max="5" step="1" value="1">
-      <div class="stool-scale-labels">
-        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-      </div>
+      <input type="range" id="stoolSlider" class="stool-slider" min="0" max="6" step="1" value="1">
     </div>
 
     <div class="choice-row">
@@ -60,7 +51,7 @@
     </div>
 
     <div class="field-row field-row--inline">
-      <span class="field-row-label">Jídlo <span class="field-label-hint">(nepovinné)</span></span>
+      <span class="field-row-label">Jídlo</span>
       <input type="date" id="foodDateInput" class="edit-field-input">
       <input type="time" id="foodTimeInput" class="edit-field-input">
       <span id="foodDiff" class="field-row-diff" hidden></span>
@@ -69,12 +60,25 @@
     <div class="tags-grid" id="tagsGrid"></div>
 
     <div class="choice-row">
-      <span class="choice-row-label">Doplňky <span class="field-label-hint">(nepovinné)</span></span>
+      <span class="choice-row-label">Doplňky</span>
       <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
     </div>
 
-    <div class="field-row field-row--inline">
-      <span class="field-row-label">Spánek <span class="field-label-hint">(nepovinné)</span></span>
+    <div class="collapse-row">
+      <button type="button" id="stressToggleBtn" class="collapse-toggle">Stres</button>
+      <button type="button" id="sleepToggleBtn" class="collapse-toggle">Spánek</button>
+    </div>
+
+    <div class="scale-block" id="stressBlock" hidden>
+      <div class="scale-row">
+        <span class="scale-label">Stres</span>
+        <span class="scale-value" id="stressDesc"></span>
+      </div>
+      <input type="range" id="stressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+    </div>
+
+    <div class="field-row field-row--inline" id="sleepRow" hidden>
+      <span class="field-row-label">Spánek</span>
       <input type="date" id="sleepDateInput" class="edit-field-input">
       <input type="time" id="sleepTimeInput" class="edit-field-input">
       <span id="sleepDiff" class="field-row-diff" hidden></span>
@@ -87,7 +91,6 @@
       <button id="noteToggleBtn" type="button" class="note-toggle-btn">Poznámka</button>
       <button id="saveBtn" class="save-btn">Spláchnout</button>
     </div>
-    <div class="save-hint">Podržením Spláchnout upravíš datum a čas (předvyplněné na teď).</div>
 
     <div id="buildFooter" class="build-footer"></div>
   </main>
@@ -99,15 +102,15 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat" data-hint="Průměrná konzistence stolice dnes (0 pevný doutník – 5 vodnatá).">
+      <div class="stat" data-hint="Průměrná konzistence stolice dnes (0 doutník – 6 průjem).">
         <div class="stat-value" id="todayAvgStat">–</div>
         <div class="stat-label">dnes</div>
       </div>
-      <div class="stat" data-hint="Průměrná konzistence stolice včera (0 pevný doutník – 5 vodnatá).">
+      <div class="stat" data-hint="Průměrná konzistence stolice včera (0 doutník – 6 průjem).">
         <div class="stat-value" id="yesterdayAvgStat">–</div>
         <div class="stat-label">včera</div>
       </div>
-      <div class="stat" data-hint="Průměrná konzistence stolice za měsíc (0 pevný doutník – 5 vodnatá).">
+      <div class="stat" data-hint="Průměrná konzistence stolice za měsíc (0 doutník – 6 průjem).">
         <div class="stat-value" id="avgTypeStat">–</div>
         <div class="stat-label">Ø konzist. (měsíc)</div>
       </div>
@@ -139,7 +142,7 @@
     </div>
 
     <div class="chart-block">
-      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(0–5, klik = filtr)</span></div>
+      <div class="chart-title">Rozložení konzistence stolice <span class="chart-unit">(0–6, klik = filtr)</span></div>
       <div class="chart-row">
         <div class="chart-yaxis" id="yAxisType"><span></span><span>0</span></div>
         <div class="chart-bars" id="chartType"></div>
@@ -199,7 +202,7 @@
 
       <div class="scale-block">
         <div class="scale-row">
-          <span class="scale-label">Stres <span class="field-label-hint">(nepovinné)</span></span>
+          <span class="scale-label">Stres</span>
           <span class="scale-value" id="editStressDesc"></span>
         </div>
         <input type="range" id="editStressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
@@ -207,7 +210,7 @@
 
       <div class="stool-block stool-block--compact">
         <div class="stool-desc" id="editStoolDesc"></div>
-        <input type="range" id="editStoolSlider" class="stool-slider" min="0" max="5" step="1" value="1">
+        <input type="range" id="editStoolSlider" class="stool-slider" min="0" max="6" step="1" value="1">
       </div>
 
       <div class="choice-row">
@@ -226,7 +229,7 @@
       </div>
 
       <div class="field-row field-row--inline">
-        <span class="field-row-label">Jedl <span class="field-label-hint">(nepovinné)</span></span>
+        <span class="field-row-label">Jedl</span>
         <input type="date" id="editFoodDateInput" class="edit-field-input">
         <input type="time" id="editFoodTimeInput" class="edit-field-input">
         <span id="editFoodDiff" class="field-row-diff" hidden></span>
@@ -234,11 +237,11 @@
 
       <div class="tags-grid" id="editTagsGrid"></div>
 
-      <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
+      <div class="field-label">Doplňky</div>
       <div class="tags-grid tags-grid--compact" id="editSupplementsGrid"></div>
 
       <div class="field-row field-row--inline">
-        <span class="field-row-label">Spánek <span class="field-label-hint">(nepovinné)</span></span>
+        <span class="field-row-label">Spánek</span>
         <input type="date" id="editSleepDateInput" class="edit-field-input">
         <input type="time" id="editSleepTimeInput" class="edit-field-input">
         <span id="editSleepDiff" class="field-row-diff" hidden></span>
@@ -266,6 +269,10 @@
       Importovat data (JSON)
       <input type="file" id="importInput" accept="application/json" hidden>
     </label>
+
+    <div class="settings-section-title">Škála konzistence</div>
+    <div id="stoolLabelsEditor" class="stool-labels-editor"></div>
+    <button id="stoolLabelsResetBtn" class="menu-item settings-link">Obnovit výchozí popisky</button>
   </div>
 
   <div id="chartTooltip" class="chart-tooltip" hidden></div>
