@@ -15,7 +15,6 @@
   <main>
     <div class="app-header">
       <h1 class="app-title">💩</h1>
-      <button type="button" id="stoolDateTimeToggleBtn" class="collapse-toggle">Kdy</button>
       <div class="topbar">
         <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
         <div id="menu" class="menu" hidden>
@@ -25,10 +24,12 @@
       </div>
     </div>
 
-    <div class="app-header-datetime" id="stoolDateTimeWrap" hidden>
+    <div class="app-header-datetime" id="stoolDateTimeWrap">
       <input type="date" id="stoolDateInput" class="edit-field-input">
       <input type="time" id="stoolTimeInput" class="edit-field-input">
     </div>
+
+    <div id="lastEntrySummary" class="last-entry-summary" hidden></div>
 
     <div class="stool-block">
       <div class="stool-desc" id="stoolDesc"></div>
@@ -84,16 +85,19 @@
       <span id="sleepDiff" class="field-row-diff" hidden></span>
     </div>
 
-    <textarea id="noteInput" class="note-input" maxlength="240" rows="2" placeholder="Poznámka" hidden></textarea>
-
-    <div id="formError" class="form-error" hidden></div>
-    <div class="save-row">
-      <button id="noteToggleBtn" type="button" class="note-toggle-btn">Poznámka</button>
-      <button id="saveBtn" class="save-btn">Spláchnout</button>
-    </div>
-
-    <div id="buildFooter" class="build-footer"></div>
   </main>
+
+  <div class="bottom-bar">
+    <div class="bottom-bar-inner">
+      <textarea id="noteInput" class="note-input" maxlength="240" rows="2" placeholder="Poznámka" hidden></textarea>
+      <div id="formError" class="form-error" hidden></div>
+      <div class="save-row">
+        <button id="noteToggleBtn" type="button" class="note-toggle-btn" aria-label="Poznámka">📝</button>
+        <button id="saveBtn" class="save-btn">🚽 Spláchnout</button>
+      </div>
+      <div id="buildFooter" class="build-footer"></div>
+    </div>
+  </div>
 
   <div id="statsView" class="stats-view" hidden>
     <div class="view-header">

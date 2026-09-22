@@ -4,6 +4,7 @@
   --fg: #f2f2f2;
   --muted: #8a8a8a;
   --accent: #ff5252;
+  --time-accent: #ffa726;
   --ok: #4caf50;
   --card: #1a1a1a;
   --card-2: #1c1c1c;
@@ -24,7 +25,7 @@ body {
   margin: 0;
   display: flex;
   justify-content: center;
-  padding: 20px 10px 32px;
+  padding: 20px 10px 0;
   background: var(--bg);
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -34,6 +35,23 @@ body {
 main {
   width: 100%;
   max-width: 440px;
+  padding-bottom: 170px;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+}
+
+.bottom-bar-inner {
+  max-width: 440px;
+  margin: 0 auto;
 }
 
 .app-header {
@@ -55,10 +73,7 @@ main {
   gap: 6px;
   flex: 1;
   min-width: 0;
-}
-
-.app-header-datetime[hidden] {
-  display: none;
+  margin-bottom: 12px;
 }
 
 .app-header-datetime .edit-field-input {
@@ -128,6 +143,31 @@ main {
 
 .menu-item-static:hover {
   background: none;
+}
+
+/* last entry summary */
+
+.last-entry-summary {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.last-entry-summary[hidden] {
+  display: none;
+}
+
+.last-entry-summary-when {
+  color: var(--fg);
+  font-weight: 600;
+  font-size: 13px;
 }
 
 /* stool block */
@@ -245,11 +285,11 @@ main {
 }
 
 .field-row--inline input[type="date"] {
-  min-width: 76px;
+  min-width: 44px;
 }
 
 .field-row--inline input[type="time"] {
-  min-width: 80px;
+  min-width: 56px;
 }
 
 .field-row-diff {
@@ -259,7 +299,8 @@ main {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
-  color: var(--muted);
+  font-weight: 600;
+  color: var(--time-accent);
   text-align: right;
 }
 
@@ -267,11 +308,45 @@ main {
   color: var(--accent);
 }
 
-/* Chromium (the target Android PWA browser) lets the year sub-field of a
-   date input be hidden individually — used to keep field-row--inline rows
-   on one line. No-op elsewhere, so it's safe to apply globally. */
-input[type="date"]::-webkit-datetime-edit-year-field {
-  display: none;
+/* Which vendor trick (if any) hides just the year sub-field of a native
+   date input varies by browser/OS — unreliable enough that it showed the
+   full year (and overlapped the field) on at least one real device. So
+   instead of fighting the native rendering, the input's own text is made
+   invisible and a short "D.M." label is stacked on top of it (same grid
+   cell) — the input still owns the value and the picker, the label is
+   what's actually visible. wireShortDate() in app.js builds this markup. */
+.date-short-wrap {
+  display: grid;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.date-short-wrap > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.date-short-wrap input.date-short-input {
+  color: transparent;
+}
+
+.date-short-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--fg);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-short-overlay:empty::before {
+  content: "–.–.";
+  color: var(--muted);
+}
+
+.field-row--inline .date-short-overlay {
+  font-size: 12px;
 }
 
 .choice-row {
@@ -382,14 +457,19 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   gap: 8px;
 }
 
+.bottom-bar .note-input {
+  margin-bottom: 8px;
+}
+
 .note-toggle-btn {
   flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--card-2);
   color: var(--fg);
-  font-size: 14px;
-  padding: 14px 16px;
+  font-size: 20px;
+  line-height: 1;
+  padding: 12px 16px;
   cursor: pointer;
 }
 

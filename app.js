@@ -165,6 +165,36 @@ function formatCzechDate(d) {
   return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
+function formatCzechDateShort(d) {
+  return `${d.getDate()}.${d.getMonth() + 1}.`;
+}
+
+// Which vendor trick (if any) hides just the year sub-field of a native date
+// input varies by browser/OS — on at least one real device the year showed
+// in full and overlapped the field. So instead of fighting native rendering,
+// the input's own text is made invisible (see .date-short-input in
+// style.css) and this short "D.M." label is stacked on top of it in the
+// same grid cell: the input still owns the value and the picker, the label
+// is what's actually visible.
+function wireShortDate(dateEl) {
+  const wrap = document.createElement("span");
+  wrap.className = "date-short-wrap";
+  dateEl.replaceWith(wrap);
+  wrap.appendChild(dateEl);
+  dateEl.classList.add("date-short-input");
+  const overlay = document.createElement("span");
+  overlay.className = "date-short-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  wrap.appendChild(overlay);
+  function update() {
+    const parsed = parseDateInputValue(dateEl.value);
+    overlay.textContent = parsed ? formatCzechDateShort(new Date(parsed.year, parsed.month - 1, parsed.day)) : "";
+  }
+  dateEl.addEventListener("input", update);
+  update();
+  return update;
+}
+
 function parseDateTime(dateText, timeText) {
   const d = parseDateInputValue(dateText);
   const t = parseTimeInputValue(timeText);
@@ -248,7 +278,7 @@ const stoolDescEl = $("stoolDesc");
 const stoolDateInputEl = $("stoolDateInput");
 const stoolTimeInputEl = $("stoolTimeInput");
 const stoolDateTimeWrapEl = $("stoolDateTimeWrap");
-const stoolDateTimeToggleBtnEl = $("stoolDateTimeToggleBtn");
+const lastEntrySummaryEl = $("lastEntrySummary");
 const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
@@ -471,21 +501,32 @@ function updateEditSaveState() {
   editNoteInputEl,
 ].forEach((el) => el.addEventListener("input", updateEditSaveState));
 
+const updateStoolShortDate = wireShortDate(stoolDateInputEl);
+const updateFoodShortDate = wireShortDate(foodDateInputEl);
+const updateSleepShortDate = wireShortDate(sleepDateInputEl);
+const updateEditShortDate = wireShortDate(editDateInputEl);
+const updateEditFoodShortDate = wireShortDate(editFoodDateInputEl);
+const updateEditSleepShortDate = wireShortDate(editSleepDateInputEl);
+
 // Food/sleep date/time is optional and starts empty — a date sitting there
 // with no time doesn't mean anything, so it's only worth defaulting once the
 // time is actually set (to today, the common case). Wired before wireDiff
 // below so the diff calculation below sees the auto-filled date on the same
-// "input" event, not one event later.
-function fillDateOnTime(dateEl, timeEl) {
+// "input" event, not one event later. Setting .value doesn't dispatch
+// "input" on its own, so the short-date overlay is refreshed explicitly too.
+function fillDateOnTime(dateEl, timeEl, onDateSet) {
   timeEl.addEventListener("input", () => {
-    if (timeEl.value && !dateEl.value) dateEl.value = dateKey(new Date());
+    if (timeEl.value && !dateEl.value) {
+      dateEl.value = dateKey(new Date());
+      if (onDateSet) onDateSet();
+    }
   });
 }
 
-fillDateOnTime(foodDateInputEl, foodTimeInputEl);
-fillDateOnTime(sleepDateInputEl, sleepTimeInputEl);
-fillDateOnTime(editFoodDateInputEl, editFoodTimeInputEl);
-fillDateOnTime(editSleepDateInputEl, editSleepTimeInputEl);
+fillDateOnTime(foodDateInputEl, foodTimeInputEl, updateFoodShortDate);
+fillDateOnTime(sleepDateInputEl, sleepTimeInputEl, updateSleepShortDate);
+fillDateOnTime(editFoodDateInputEl, editFoodTimeInputEl, updateEditFoodShortDate);
+fillDateOnTime(editSleepDateInputEl, editSleepTimeInputEl, updateEditSleepShortDate);
 
 const updateFormFoodDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
 const updateFormSleepDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, sleepDateInputEl, sleepTimeInputEl, sleepDiffEl);
@@ -505,6 +546,59 @@ function hideFormError(el) {
   el.hidden = true;
 }
 
+function timeAgoText(ms) {
+  const absMin = Math.max(0, Math.round(ms / 60000));
+  const h = Math.floor(absMin / 60);
+  const m = absMin % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+}
+
+// Sleep is often not filled on every entry, so its line in the summary
+// comes from the most recent entry that actually has it — which may not be
+// the same entry as the rest of the summary.
+function renderLastEntrySummary() {
+  const entries = loadEntries();
+  if (!entries.length) {
+    lastEntrySummaryEl.hidden = true;
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const last = sorted[0];
+  const lastSleep = sorted.find((e) => e.sleepAt);
+
+  const at = new Date(last.at);
+  const now = new Date();
+  const whenText = dateKey(at) === todayKey() ? formatHHMM(at) : `${formatCzechDateShort(at)} ${formatHHMM(at)}`;
+
+  const stoolLabel = STOOL_LABELS[last.stoolType];
+  const foodEmoji = last.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
+  const suppEmoji = last.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
+
+  const lines = [];
+  lines.push(`<span class="last-entry-summary-when">před ${timeAgoText(now - at)} · ${whenText}</span>`);
+  const valueBits = [
+    stoolLabel ? `${last.stoolType} · ${stoolLabel.name}` : null,
+    URGENCY_LABELS[last.urgency],
+    BLOATING_LABELS[last.bloating],
+    PAIN_LABELS[last.pain],
+  ].filter(Boolean);
+  lines.push(valueBits.join(" · "));
+  if (foodEmoji || suppEmoji) {
+    lines.push([foodEmoji, suppEmoji].filter(Boolean).join("  "));
+  }
+  const extras = [];
+  if (last.stress) extras.push(`Stres: ${STRESS_LABELS[last.stress]}`);
+  if (lastSleep) {
+    const sd = new Date(lastSleep.sleepAt);
+    const sleepWhen = dateKey(sd) === todayKey() ? formatHHMM(sd) : `${formatCzechDateShort(sd)} ${formatHHMM(sd)}`;
+    extras.push(`🌙 ${sleepWhen}`);
+  }
+  if (extras.length) lines.push(extras.join(" · "));
+
+  lastEntrySummaryEl.innerHTML = lines.map((line) => `<div>${line}</div>`).join("");
+  lastEntrySummaryEl.hidden = false;
+}
+
 function resetForm() {
   stoolSliderEl.value = "1";
   updateStoolDisplay(stoolSliderEl, stoolDescEl);
@@ -515,12 +609,15 @@ function resetForm() {
   updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS);
   const now = new Date();
   stoolDateInputEl.value = dateKey(now);
+  updateStoolShortDate();
   stoolTimeInputEl.value = formatHHMM(now);
   foodDateInputEl.value = "";
   foodTimeInputEl.value = "";
+  updateFoodShortDate();
   updateFormFoodDiff();
   sleepDateInputEl.value = "";
   sleepTimeInputEl.value = "";
+  updateSleepShortDate();
   updateFormSleepDiff();
   hideFormError(formErrorEl);
   formTags = new Set();
@@ -530,12 +627,11 @@ function resetForm() {
   noteInputEl.value = "";
   noteInputEl.hidden = true;
   noteToggleBtnEl.classList.remove("active");
-  stoolDateTimeWrapEl.hidden = true;
-  stoolDateTimeToggleBtnEl.classList.remove("active");
   stressBlockEl.hidden = true;
   stressToggleBtnEl.classList.remove("active");
   sleepRowEl.hidden = true;
   sleepToggleBtnEl.classList.remove("active");
+  renderLastEntrySummary();
 }
 
 function saveNewEntry() {
@@ -585,15 +681,9 @@ noteToggleBtnEl.addEventListener("click", () => {
   if (!noteInputEl.hidden) noteInputEl.focus();
 });
 
-// Kdy/Stres/Spánek are plain labels: tap reveals the control, already
-// prefilled (stool date/time defaults to now via resetForm; the stress
-// slider always has a value; sleep gets filled to now the first time it's
-// opened, same as the "flush now" default).
-stoolDateTimeToggleBtnEl.addEventListener("click", () => {
-  stoolDateTimeWrapEl.hidden = !stoolDateTimeWrapEl.hidden;
-  stoolDateTimeToggleBtnEl.classList.toggle("active", !stoolDateTimeWrapEl.hidden);
-});
-
+// Stres/Spánek are plain labels: tap reveals the control, already prefilled
+// (the stress slider always has a value; sleep gets filled to now the first
+// time it's opened, same as the "flush now" default).
 stressToggleBtnEl.addEventListener("click", () => {
   stressBlockEl.hidden = !stressBlockEl.hidden;
   stressToggleBtnEl.classList.toggle("active", !stressBlockEl.hidden);
@@ -605,6 +695,7 @@ sleepToggleBtnEl.addEventListener("click", () => {
   if (!sleepRowEl.hidden && !sleepTimeInputEl.value) {
     const now = new Date();
     sleepDateInputEl.value = dateKey(now);
+    updateSleepShortDate();
     sleepTimeInputEl.value = formatHHMM(now);
     updateFormSleepDiff();
   }
@@ -942,6 +1033,7 @@ function openEdit(entry) {
   editingId = entry.id;
   const d = new Date(entry.at);
   editDateInputEl.value = dateKey(d);
+  updateEditShortDate();
   editTimeInputEl.value = formatHHMM(d);
   editStoolSliderEl.value = String(entry.stoolType);
   updateStoolDisplay(editStoolSliderEl, editStoolDescEl);
@@ -958,6 +1050,7 @@ function openEdit(entry) {
     editFoodDateInputEl.value = "";
     editFoodTimeInputEl.value = "";
   }
+  updateEditFoodShortDate();
   updateEditFoodDiff();
   if (entry.sleepAt) {
     const sd = new Date(entry.sleepAt);
@@ -967,6 +1060,7 @@ function openEdit(entry) {
     editSleepDateInputEl.value = "";
     editSleepTimeInputEl.value = "";
   }
+  updateEditSleepShortDate();
   updateEditSleepDiff();
   editTags = new Set(entry.tags);
   buildTagButtons(editTagsGridEl, TAGS, editTags, updateEditSaveState);
@@ -1035,6 +1129,7 @@ editSaveBtnEl.addEventListener("click", () => {
   saveEntries(entries);
   closeEdit();
   renderStats();
+  renderLastEntrySummary();
 });
 
 // window.confirm() is silently inert in an installed Android PWA, same as
@@ -1058,6 +1153,7 @@ editDeleteBtnEl.addEventListener("click", () => {
   saveEntries(entries);
   closeEdit();
   renderStats();
+  renderLastEntrySummary();
 });
 
 // --- settings ---
