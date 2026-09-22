@@ -28,6 +28,14 @@
       </div>
     </div>
 
+    <div class="scale-block">
+      <div class="scale-row">
+        <span class="scale-label">Stres <span class="field-label-hint">(nepovinné)</span></span>
+        <span class="scale-value" id="stressDesc"></span>
+      </div>
+      <input type="range" id="stressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+    </div>
+
     <div class="stool-block">
       <div class="stool-desc" id="stoolDesc"></div>
       <input type="range" id="stoolSlider" class="stool-slider" min="0" max="5" step="1" value="1">
@@ -51,12 +59,12 @@
       <div class="tags-grid tags-grid--choice" id="painGroup"></div>
     </div>
 
-    <div class="field-row">
+    <div class="field-row field-row--inline">
       <span class="field-row-label">Jídlo <span class="field-label-hint">(nepovinné)</span></span>
       <input type="date" id="foodDateInput" class="edit-field-input">
       <input type="time" id="foodTimeInput" class="edit-field-input">
+      <span id="foodDiff" class="field-row-diff" hidden></span>
     </div>
-    <div id="foodDiff" class="food-diff" hidden></div>
 
     <div class="tags-grid" id="tagsGrid"></div>
 
@@ -65,19 +73,20 @@
       <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
     </div>
 
-    <div class="scale-block">
-      <div class="scale-row">
-        <span class="scale-label">Stres</span>
-        <span class="scale-value" id="stressDesc"></span>
-      </div>
-      <input type="range" id="stressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+    <div class="field-row field-row--inline">
+      <span class="field-row-label">Spánek <span class="field-label-hint">(nepovinné)</span></span>
+      <input type="date" id="sleepDateInput" class="edit-field-input">
+      <input type="time" id="sleepTimeInput" class="edit-field-input">
+      <span id="sleepDiff" class="field-row-diff" hidden></span>
     </div>
 
-    <label class="field-label" for="noteInput">Poznámka</label>
-    <textarea id="noteInput" class="note-input" maxlength="240" rows="2"></textarea>
+    <textarea id="noteInput" class="note-input" maxlength="240" rows="2" placeholder="Poznámka" hidden></textarea>
 
     <div id="formError" class="form-error" hidden></div>
-    <button id="saveBtn" class="save-btn">Uložit</button>
+    <div class="save-row">
+      <button id="noteToggleBtn" type="button" class="note-toggle-btn">Poznámka</button>
+      <button id="saveBtn" class="save-btn">Uložit</button>
+    </div>
 
     <div id="buildFooter" class="build-footer"></div>
   </main>
@@ -187,6 +196,14 @@
         <input type="time" id="editTimeInput" class="edit-field-input">
       </div>
 
+      <div class="scale-block">
+        <div class="scale-row">
+          <span class="scale-label">Stres <span class="field-label-hint">(nepovinné)</span></span>
+          <span class="scale-value" id="editStressDesc"></span>
+        </div>
+        <input type="range" id="editStressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+      </div>
+
       <div class="stool-block stool-block--compact">
         <div class="stool-desc" id="editStoolDesc"></div>
         <input type="range" id="editStoolSlider" class="stool-slider" min="0" max="5" step="1" value="1">
@@ -207,24 +224,23 @@
         <div class="tags-grid tags-grid--choice" id="editPainGroup"></div>
       </div>
 
-      <div class="field-row">
+      <div class="field-row field-row--inline">
         <span class="field-row-label">Jedl <span class="field-label-hint">(nepovinné)</span></span>
         <input type="date" id="editFoodDateInput" class="edit-field-input">
         <input type="time" id="editFoodTimeInput" class="edit-field-input">
+        <span id="editFoodDiff" class="field-row-diff" hidden></span>
       </div>
-      <div id="editFoodDiff" class="food-diff" hidden></div>
 
       <div class="tags-grid" id="editTagsGrid"></div>
 
       <div class="field-label">Doplňky <span class="field-label-hint">(nepovinné)</span></div>
       <div class="tags-grid tags-grid--compact" id="editSupplementsGrid"></div>
 
-      <div class="scale-block">
-        <div class="scale-row">
-          <span class="scale-label">Stres</span>
-          <span class="scale-value" id="editStressDesc"></span>
-        </div>
-        <input type="range" id="editStressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+      <div class="field-row field-row--inline">
+        <span class="field-row-label">Spánek <span class="field-label-hint">(nepovinné)</span></span>
+        <input type="date" id="editSleepDateInput" class="edit-field-input">
+        <input type="time" id="editSleepTimeInput" class="edit-field-input">
+        <span id="editSleepDiff" class="field-row-diff" hidden></span>
       </div>
 
       <textarea id="editNoteInput" class="note-input edit-note-input" maxlength="240" rows="2" placeholder="poznámka"></textarea>
