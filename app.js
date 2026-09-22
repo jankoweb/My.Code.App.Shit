@@ -1,12 +1,13 @@
 const STORAGE_KEY = "shit-app-entries";
 
 const STOOL_LABELS = {
-  0: "Pevný doutník – ideální tvar",
-  1: "Tvarovaná – pevná, normální",
-  2: "Měkká – drží tvar",
-  3: "Kašovitá – nedrží tvar",
-  4: "Řídká – málo pevné složky",
-  5: "Vodnatá – jen tekutina",
+  0: { name: "Doutník", desc: "pevný, tvrdý" },
+  1: { name: "Kabel", desc: "měkčí, vcelku" },
+  2: { name: "Kopeček", desc: "měkká, nedrží tvar" },
+  3: { name: "Plaváček", desc: "pevné kusy" },
+  4: { name: "Kaše", desc: "už blízko průjmu" },
+  5: { name: "Průser", desc: "řídká, málo pevné" },
+  6: { name: "Průjem", desc: "vodnatý" },
 };
 
 const URGENCY_LABELS = { 1: "Normální", 2: "Naléhavá", 3: "Velmi naléhavá" };
@@ -20,15 +21,15 @@ const STRESS_LABELS = { 1: "Žádný", 2: "Mírný", 3: "Střední", 4: "Vysoký
 // foods instead of tracking every food item as an isolated bucket.
 const TAGS = [
   { key: "syry", emoji: "🧀", label: "Sýry" },
-  { key: "mlecne", emoji: "🥛", label: "Mléčné" },
-  { key: "uzeniny", emoji: "🍖", label: "Uzeniny" },
+  { key: "mlecne", emoji: "🥛", label: "Mléčné výrobky" },
+  { key: "uzeniny", emoji: "🍖", label: "Uzeniny, šunky" },
+  { key: "tucne", emoji: "🧈", label: "Tučné" },
   { key: "smazene", emoji: "🍟", label: "Smažené" },
-  { key: "sladke", emoji: "🍫", label: "Sladké" },
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
+  { key: "sladke", emoji: "🍫", label: "Sladké" },
   { key: "cibule", emoji: "🧅", label: "Cibule" },
   { key: "nakladane", emoji: "🫙", label: "Nakládané" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
-  { key: "tucne", emoji: "🧈", label: "Tučné" },
   { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát" },
   { key: "zelenina", emoji: "🥦", label: "Zelenina" },
   { key: "ovoce", emoji: "🍎", label: "Ovoce" },
@@ -54,7 +55,7 @@ const TAG_COMPONENTS = {
 
 const COMPONENTS = [
   { key: "tuk", emoji: "🧈", label: "Tuk" },
-  { key: "mlecne", emoji: "🥛", label: "Mléčné" },
+  { key: "mlecne", emoji: "🥛", label: "Mléčné výrobky" },
   { key: "sul", emoji: "🧂", label: "Sůl" },
   { key: "smazene", emoji: "🍟", label: "Smažené" },
   { key: "sladke", emoji: "🍫", label: "Sladké" },
@@ -75,12 +76,12 @@ function entryComponents(entry) {
 
 const SUPPLEMENTS = [
   { key: "c", emoji: "🍊", label: "C" },
-  { key: "mg", emoji: "🥜", label: "Mg" },
+  { key: "mg", emoji: "🥬", label: "Mg" },
   { key: "zn", emoji: "🦪", label: "Zn" },
   { key: "d", emoji: "☀️", label: "D" },
-  { key: "b", emoji: "⚡", label: "B" },
+  { key: "b", emoji: "🥚", label: "B" },
   { key: "e", emoji: "🫒", label: "E" },
-  { key: "laktobacily", emoji: "🦠", label: "Laktobacily" },
+  { key: "laktobacily", emoji: "🥛", label: "Laktobacily" },
 ];
 
 const MONTH_NAMES = [
@@ -198,7 +199,7 @@ function loadEntries() {
       )
       .map((e) => ({
         ...e,
-        stoolType: Math.min(5, Math.max(0, e.stoolType)),
+        stoolType: Math.min(6, Math.max(0, e.stoolType)),
         urgency: clampScale(e.urgency, 3),
         bloating: clampScale(e.bloating, 3),
         pain: clampScale(e.pain, 3),
@@ -222,9 +223,12 @@ const stoolDescEl = $("stoolDesc");
 const stoolDateInputEl = $("stoolDateInput");
 const stoolTimeInputEl = $("stoolTimeInput");
 const stoolDateTimeWrapEl = $("stoolDateTimeWrap");
+const stoolDateTimeToggleBtnEl = $("stoolDateTimeToggleBtn");
 const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
+const sleepRowEl = $("sleepRow");
+const sleepToggleBtnEl = $("sleepToggleBtn");
 const sleepDateInputEl = $("sleepDateInput");
 const sleepTimeInputEl = $("sleepTimeInput");
 const sleepDiffEl = $("sleepDiff");
@@ -233,6 +237,8 @@ const supplementsGridEl = $("supplementsGrid");
 const urgencyGroupEl = $("urgencyGroup");
 const bloatingGroupEl = $("bloatingGroup");
 const painGroupEl = $("painGroup");
+const stressBlockEl = $("stressBlock");
+const stressToggleBtnEl = $("stressToggleBtn");
 const stressSliderEl = $("stressSlider");
 const stressDescEl = $("stressDesc");
 const noteInputEl = $("noteInput");
@@ -345,7 +351,11 @@ function buildTagButtons(container, items, tagSet, onChange) {
 }
 
 function updateStoolDisplay(sliderEl, descEl) {
-  descEl.textContent = STOOL_LABELS[Number(sliderEl.value)] || "";
+  const value = Number(sliderEl.value);
+  const label = STOOL_LABELS[value];
+  descEl.innerHTML = label
+    ? `<span class="stool-name">${value} · ${label.name}</span> <span class="stool-hint">– ${label.desc}</span>`
+    : "";
 }
 
 function updateScaleDesc(sliderEl, descEl, labels) {
@@ -494,6 +504,11 @@ function resetForm() {
   noteInputEl.hidden = true;
   noteToggleBtnEl.classList.remove("active");
   stoolDateTimeWrapEl.hidden = true;
+  stoolDateTimeToggleBtnEl.classList.remove("active");
+  stressBlockEl.hidden = true;
+  stressToggleBtnEl.classList.remove("active");
+  sleepRowEl.hidden = true;
+  sleepToggleBtnEl.classList.remove("active");
 }
 
 function saveNewEntry() {
@@ -535,45 +550,37 @@ function saveNewEntry() {
   openStatsView();
 }
 
-// A short tap on Spláchnout saves immediately with the current date/time
-// (hidden by default, prefilled to now). A long press instead reveals that
-// date/time so it can be backdated before saving — the click that follows
-// the long-press release is suppressed so it doesn't also save.
-const SAVE_LONG_PRESS_MS = 500;
-let saveLongPressTimer = null;
-let saveLongPressActive = false;
-
-function revealStoolDateTime() {
-  stoolDateTimeWrapEl.hidden = false;
-  stoolDateTimeWrapEl.scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-saveBtnEl.addEventListener("pointerdown", () => {
-  saveLongPressActive = false;
-  saveLongPressTimer = setTimeout(() => {
-    saveLongPressActive = true;
-    revealStoolDateTime();
-  }, SAVE_LONG_PRESS_MS);
-});
-
-["pointerup", "pointerleave", "pointercancel"].forEach((evt) =>
-  saveBtnEl.addEventListener(evt, () => {
-    clearTimeout(saveLongPressTimer);
-  })
-);
-
-saveBtnEl.addEventListener("click", () => {
-  if (saveLongPressActive) {
-    saveLongPressActive = false;
-    return;
-  }
-  saveNewEntry();
-});
+saveBtnEl.addEventListener("click", saveNewEntry);
 
 noteToggleBtnEl.addEventListener("click", () => {
   noteInputEl.hidden = !noteInputEl.hidden;
   noteToggleBtnEl.classList.toggle("active", !noteInputEl.hidden);
   if (!noteInputEl.hidden) noteInputEl.focus();
+});
+
+// Kdy/Stres/Spánek are plain labels: tap reveals the control, already
+// prefilled (stool date/time defaults to now via resetForm; the stress
+// slider always has a value; sleep gets filled to now the first time it's
+// opened, same as the "flush now" default).
+stoolDateTimeToggleBtnEl.addEventListener("click", () => {
+  stoolDateTimeWrapEl.hidden = !stoolDateTimeWrapEl.hidden;
+  stoolDateTimeToggleBtnEl.classList.toggle("active", !stoolDateTimeWrapEl.hidden);
+});
+
+stressToggleBtnEl.addEventListener("click", () => {
+  stressBlockEl.hidden = !stressBlockEl.hidden;
+  stressToggleBtnEl.classList.toggle("active", !stressBlockEl.hidden);
+});
+
+sleepToggleBtnEl.addEventListener("click", () => {
+  sleepRowEl.hidden = !sleepRowEl.hidden;
+  sleepToggleBtnEl.classList.toggle("active", !sleepRowEl.hidden);
+  if (!sleepRowEl.hidden && !sleepTimeInputEl.value) {
+    const now = new Date();
+    sleepDateInputEl.value = dateKey(now);
+    sleepTimeInputEl.value = formatHHMM(now);
+    updateFormSleepDiff();
+  }
 });
 
 // --- menu ---
@@ -774,7 +781,7 @@ function renderStats() {
 
   // stool consistency distribution — always shows the full month (it's the
   // filter control itself); clicking a bar toggles the filter
-  const typeValues = [0, 1, 2, 3, 4, 5].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
+  const typeValues = [0, 1, 2, 3, 4, 5, 6].map((t) => monthEntries.filter((e) => e.stoolType === t).length);
   renderBars(chartTypeEl, yAxisTypeEl, typeValues, "#66bb6a", {
     activeIndex: filterActive ? statsStoolFilter : null,
     onClick: (i, v) => {
@@ -782,10 +789,11 @@ function renderStats() {
       renderStats();
     },
   });
-  renderLabels(typeChartLabelsEl, ["0", "1", "2", "3", "4", "5"]);
+  renderLabels(typeChartLabelsEl, ["0", "1", "2", "3", "4", "5", "6"]);
   if (filterActive) {
+    const filterLabel = STOOL_LABELS[statsStoolFilter];
     typeHintEl.hidden = false;
-    typeHintEl.textContent = `${statsStoolFilter} – ${STOOL_LABELS[statsStoolFilter]} · ${filteredMonthEntries.length}× tento měsíc (klikni znovu pro zrušení)`;
+    typeHintEl.textContent = `${statsStoolFilter} – ${filterLabel.name} (${filterLabel.desc}) · ${filteredMonthEntries.length}× tento měsíc (klikni znovu pro zrušení)`;
   } else {
     typeHintEl.hidden = true;
   }
@@ -816,7 +824,7 @@ function renderStats() {
   renderBars(chartSupplementsEl, yAxisSupplementsEl, supplementValues, "#ab47bc", {
     onClick: (i, v, el) => showTooltip(el, `${SUPPLEMENTS[i].emoji} ${SUPPLEMENTS[i].label}: ${v}×`),
   });
-  renderLabels(supplementChartLabelsEl, SUPPLEMENTS.map((s) => s.label));
+  renderLabels(supplementChartLabelsEl, SUPPLEMENTS.map((s) => s.emoji));
 
   renderCorrelation(entries);
   renderHistoryTable(entries);
