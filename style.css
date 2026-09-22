@@ -57,6 +57,10 @@ main {
   min-width: 0;
 }
 
+.app-header-datetime[hidden] {
+  display: none;
+}
+
 .app-header-datetime .edit-field-input {
   flex: 1;
   min-width: 0;
@@ -417,6 +421,13 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .save-btn:hover {
   filter: brightness(1.08);
+}
+
+.save-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 8px;
 }
 
 /* views */

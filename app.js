@@ -221,6 +221,7 @@ const stoolSliderEl = $("stoolSlider");
 const stoolDescEl = $("stoolDesc");
 const stoolDateInputEl = $("stoolDateInput");
 const stoolTimeInputEl = $("stoolTimeInput");
+const stoolDateTimeWrapEl = $("stoolDateTimeWrap");
 const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
@@ -492,6 +493,7 @@ function resetForm() {
   noteInputEl.value = "";
   noteInputEl.hidden = true;
   noteToggleBtnEl.classList.remove("active");
+  stoolDateTimeWrapEl.hidden = true;
 }
 
 function saveNewEntry() {
@@ -533,7 +535,40 @@ function saveNewEntry() {
   openStatsView();
 }
 
-saveBtnEl.addEventListener("click", saveNewEntry);
+// A short tap on Spláchnout saves immediately with the current date/time
+// (hidden by default, prefilled to now). A long press instead reveals that
+// date/time so it can be backdated before saving — the click that follows
+// the long-press release is suppressed so it doesn't also save.
+const SAVE_LONG_PRESS_MS = 500;
+let saveLongPressTimer = null;
+let saveLongPressActive = false;
+
+function revealStoolDateTime() {
+  stoolDateTimeWrapEl.hidden = false;
+  stoolDateTimeWrapEl.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+saveBtnEl.addEventListener("pointerdown", () => {
+  saveLongPressActive = false;
+  saveLongPressTimer = setTimeout(() => {
+    saveLongPressActive = true;
+    revealStoolDateTime();
+  }, SAVE_LONG_PRESS_MS);
+});
+
+["pointerup", "pointerleave", "pointercancel"].forEach((evt) =>
+  saveBtnEl.addEventListener(evt, () => {
+    clearTimeout(saveLongPressTimer);
+  })
+);
+
+saveBtnEl.addEventListener("click", () => {
+  if (saveLongPressActive) {
+    saveLongPressActive = false;
+    return;
+  }
+  saveNewEntry();
+});
 
 noteToggleBtnEl.addEventListener("click", () => {
   noteInputEl.hidden = !noteInputEl.hidden;

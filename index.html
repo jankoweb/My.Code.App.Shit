@@ -15,7 +15,7 @@
   <main>
     <div class="app-header">
       <h1 class="app-title">💩</h1>
-      <div class="app-header-datetime">
+      <div class="app-header-datetime" id="stoolDateTimeWrap" hidden>
         <input type="date" id="stoolDateInput" class="edit-field-input">
         <input type="time" id="stoolTimeInput" class="edit-field-input">
       </div>
@@ -85,8 +85,9 @@
     <div id="formError" class="form-error" hidden></div>
     <div class="save-row">
       <button id="noteToggleBtn" type="button" class="note-toggle-btn">Poznámka</button>
-      <button id="saveBtn" class="save-btn">Uložit</button>
+      <button id="saveBtn" class="save-btn">Spláchnout</button>
     </div>
+    <div class="save-hint">Podržením Spláchnout upravíš datum a čas (předvyplněné na teď).</div>
 
     <div id="buildFooter" class="build-footer"></div>
   </main>
