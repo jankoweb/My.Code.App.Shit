@@ -864,6 +864,33 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   cursor: pointer;
 }
 
+.stool-labels-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.stool-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stool-label-num {
+  flex: 0 0 auto;
+  width: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stool-label-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 /* build footer */
 
 .build-footer {

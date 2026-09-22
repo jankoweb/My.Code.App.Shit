@@ -1,6 +1,7 @@
 const STORAGE_KEY = "shit-app-entries";
+const STOOL_LABELS_KEY = "shit-app-stool-labels";
 
-const STOOL_LABELS = {
+const DEFAULT_STOOL_LABELS = {
   0: { name: "Doutník", desc: "pevný, tvrdý" },
   1: { name: "Kabel", desc: "měkčí, vcelku" },
   2: { name: "Kopeček", desc: "měkká, nedrží tvar" },
@@ -9,6 +10,30 @@ const STOOL_LABELS = {
   5: { name: "Průser", desc: "řídká, málo pevné" },
   6: { name: "Průjem", desc: "vodnatý" },
 };
+
+// Names/descriptions are user-editable in Nastavení; what's stored can be
+// stale (fewer/more entries than today's 0-6 range) after an app update, so
+// each index falls back to the built-in default independently.
+function loadStoolLabels() {
+  let raw = null;
+  try {
+    raw = JSON.parse(localStorage.getItem(STOOL_LABELS_KEY) || "null");
+  } catch {
+    raw = null;
+  }
+  const result = {};
+  for (let i = 0; i <= 6; i++) {
+    const entry = raw && raw[i];
+    result[i] = entry && typeof entry.name === "string" && typeof entry.desc === "string" ? entry : DEFAULT_STOOL_LABELS[i];
+  }
+  return result;
+}
+
+function saveStoolLabels(labels) {
+  localStorage.setItem(STOOL_LABELS_KEY, JSON.stringify(labels));
+}
+
+let STOOL_LABELS = loadStoolLabels();
 
 const URGENCY_LABELS = { 1: "Normální", 2: "Naléhavá", 3: "Velmi naléhavá" };
 const BLOATING_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
@@ -319,6 +344,8 @@ const editSaveBtnEl = $("editSaveBtn");
 
 const exportBtnEl = $("exportBtn");
 const importInputEl = $("importInput");
+const stoolLabelsEditorEl = $("stoolLabelsEditor");
+const stoolLabelsResetBtnEl = $("stoolLabelsResetBtn");
 
 // --- form: tags ---
 
@@ -1069,6 +1096,52 @@ importInputEl.addEventListener("change", async () => {
     importInputEl.value = "";
   }
 });
+
+// Each row is one text input "Název; popis" — parsed on change so typing
+// doesn't fight with re-rendering on every keystroke.
+function refreshStoolDescs() {
+  updateStoolDisplay(stoolSliderEl, stoolDescEl);
+  updateStoolDisplay(editStoolSliderEl, editStoolDescEl);
+}
+
+function renderStoolLabelsEditor() {
+  stoolLabelsEditorEl.innerHTML = "";
+  for (let i = 0; i <= 6; i++) {
+    const row = document.createElement("div");
+    row.className = "stool-label-row";
+
+    const num = document.createElement("span");
+    num.className = "stool-label-num";
+    num.textContent = String(i);
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "edit-field-input stool-label-input";
+    input.value = `${STOOL_LABELS[i].name}; ${STOOL_LABELS[i].desc}`;
+    input.addEventListener("change", () => {
+      const [namePart, ...rest] = input.value.split(";");
+      const name = namePart.trim() || DEFAULT_STOOL_LABELS[i].name;
+      const desc = rest.join(";").trim();
+      STOOL_LABELS[i] = { name, desc };
+      saveStoolLabels(STOOL_LABELS);
+      input.value = `${name}; ${desc}`;
+      refreshStoolDescs();
+    });
+
+    row.appendChild(num);
+    row.appendChild(input);
+    stoolLabelsEditorEl.appendChild(row);
+  }
+}
+
+stoolLabelsResetBtnEl.addEventListener("click", () => {
+  STOOL_LABELS = { ...DEFAULT_STOOL_LABELS };
+  localStorage.removeItem(STOOL_LABELS_KEY);
+  renderStoolLabelsEditor();
+  refreshStoolDescs();
+});
+
+renderStoolLabelsEditor();
 
 // --- init ---
 

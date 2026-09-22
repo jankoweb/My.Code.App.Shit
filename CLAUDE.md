@@ -8,7 +8,8 @@ než cokoliv navrhneš nebo změníš.
 Appka má JEDEN účel: otevřít appku → rovnou vidím formulář (typ
 stolice, jídelní tagy, čas, poznámka) → Uložit → formulář se vyprázdní.
 Plus Přehled (grafy, tabulka záznamů, editace) a minimální Nastavení
-(export/import dat). To je vše.
+(export/import dat, editace názvů/popisků škály konzistence stolice).
+To je vše.
 
 Pokud budoucí zadání (moje nebo uživatelovo) směřuje k některému z
 tohoto, **odmítni a připomeň motivaci** místo rovnou implementace:
@@ -31,6 +32,10 @@ jednodušší cestu?"
 - Drobné opravy formuláře a ukládání.
 - Vizuální ladění (barvy, typografie) beze změny funkce.
 - Oprava výpočtu/zobrazení statistik, pokud je chybné.
+- Editace názvů a popisků 7 úrovní škály konzistence v Nastavení
+  (výjimka odsouhlasená uživatelem 2026-09-22 — jde nad rámec čistého
+  export/import, ale zůstává to textová úprava jednoho existujícího
+  popisu, ne nová obrazovka/tok).
 
 ## Technické poznámky
 
