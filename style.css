@@ -73,7 +73,6 @@ main {
   gap: 6px;
   flex: 1;
   min-width: 0;
-  margin-bottom: 12px;
 }
 
 .app-header-datetime .edit-field-input {
@@ -284,11 +283,15 @@ main {
   text-align: center;
 }
 
-.field-row--inline input[type="date"] {
+/* Fixed (not flex-growing) so filling the value never resizes the box and
+   shifts the diff text next to it. */
+.field-row--inline .date-short-wrap {
+  flex: 0 0 44px;
   min-width: 44px;
 }
 
 .field-row--inline input[type="time"] {
+  flex: 0 0 56px;
   min-width: 56px;
 }
 
@@ -355,6 +358,10 @@ main {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.choice-row[hidden] {
+  display: none;
 }
 
 .choice-row-label {

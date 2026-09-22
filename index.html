@@ -15,6 +15,10 @@
   <main>
     <div class="app-header">
       <h1 class="app-title">💩</h1>
+      <div class="app-header-datetime" id="stoolDateTimeWrap">
+        <input type="date" id="stoolDateInput" class="edit-field-input">
+        <input type="time" id="stoolTimeInput" class="edit-field-input">
+      </div>
       <div class="topbar">
         <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
         <div id="menu" class="menu" hidden>
@@ -22,11 +26,6 @@
           <button id="settingsBtn" class="menu-item">Nastavení</button>
         </div>
       </div>
-    </div>
-
-    <div class="app-header-datetime" id="stoolDateTimeWrap">
-      <input type="date" id="stoolDateInput" class="edit-field-input">
-      <input type="time" id="stoolTimeInput" class="edit-field-input">
     </div>
 
     <div id="lastEntrySummary" class="last-entry-summary" hidden></div>
@@ -70,12 +69,9 @@
       <button type="button" id="sleepToggleBtn" class="collapse-toggle">Spánek</button>
     </div>
 
-    <div class="scale-block" id="stressBlock" hidden>
-      <div class="scale-row">
-        <span class="scale-label">Stres</span>
-        <span class="scale-value" id="stressDesc"></span>
-      </div>
-      <input type="range" id="stressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+    <div class="choice-row" id="stressBlock" hidden>
+      <span class="choice-row-label">Stres</span>
+      <div class="tags-grid tags-grid--choice" id="stressGroup"></div>
     </div>
 
     <div class="field-row field-row--inline" id="sleepRow" hidden>
@@ -121,19 +117,19 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat" data-hint="Průměrná naléhavost za měsíc (1 normální – 3 velmi naléhavá).">
+      <div class="stat" data-hint="Průměrná naléhavost za měsíc (0–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgUrgencyStat">–</div>
         <div class="stat-label">Ø naléhavost</div>
       </div>
-      <div class="stat" data-hint="Průměrné nadýmání za měsíc (1 žádné – 3 výrazné).">
+      <div class="stat" data-hint="Průměrné nadýmání za měsíc (0–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgBloatingStat">–</div>
         <div class="stat-label">Ø nadýmání</div>
       </div>
-      <div class="stat" data-hint="Průměrná bolest/křeče za měsíc (1 žádné – 3 výrazné).">
+      <div class="stat" data-hint="Průměrná bolest/křeče za měsíc (0–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgPainStat">–</div>
         <div class="stat-label">Ø bolest</div>
       </div>
-      <div class="stat" data-hint="Průměrný stres za měsíc (1 žádný – 5 velmi vysoký).">
+      <div class="stat" data-hint="Průměrný stres za měsíc (0–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgStressStat">–</div>
         <div class="stat-label">Ø stres</div>
       </div>
@@ -204,12 +200,9 @@
         <input type="time" id="editTimeInput" class="edit-field-input">
       </div>
 
-      <div class="scale-block">
-        <div class="scale-row">
-          <span class="scale-label">Stres</span>
-          <span class="scale-value" id="editStressDesc"></span>
-        </div>
-        <input type="range" id="editStressSlider" class="scale-slider" min="1" max="5" step="1" value="1">
+      <div class="choice-row">
+        <span class="choice-row-label">Stres</span>
+        <div class="tags-grid tags-grid--choice" id="editStressGroup"></div>
       </div>
 
       <div class="stool-block stool-block--compact">

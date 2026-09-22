@@ -35,10 +35,9 @@ function saveStoolLabels(labels) {
 
 let STOOL_LABELS = loadStoolLabels();
 
-const URGENCY_LABELS = { 1: "Normální", 2: "Naléhavá", 3: "Velmi naléhavá" };
-const BLOATING_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
-const PAIN_LABELS = { 1: "Žádné", 2: "Mírné", 3: "Výrazné" };
-const STRESS_LABELS = { 1: "Žádný", 2: "Mírný", 3: "Střední", 4: "Vysoký", 5: "Velmi vysoký" };
+// Naléhavost/Nadýmání/Bolest/Stres share one 0-2 scale, shown as bare
+// numbers (no word labels) — see createChoiceState below.
+const SCALE_LABELS = { 0: "0", 1: "1", 2: "2" };
 
 // Tags on the entry screen are food items (fast to recognize & tap).
 // Internally each maps to one or more underlying components, so charts and
@@ -211,7 +210,20 @@ function formatDiffHuman(stoolDate, itemDate) {
   return diffMs < 0 ? { text: `⚠️ po ${text}`, warn: true } : { text: `před ${text}`, warn: false };
 }
 
-function wireDiff(stoolDateEl, stoolTimeEl, itemDateEl, itemTimeEl, diffEl) {
+// Sleep reads more naturally the other way round from food: "2 h po spánku"
+// (stool came 2h after sleep) rather than "před 2 h" (which suggests "2h
+// ago"). The warn case (sleep logged as being AFTER the stool) still flags.
+function formatSleepDiffHuman(stoolDate, sleepDate) {
+  const diffMs = stoolDate - sleepDate;
+  const absMin = Math.round(Math.abs(diffMs) / 60000);
+  const h = Math.floor(absMin / 60);
+  const m = absMin % 60;
+  const text = h > 0 ? `${h} h ${m} min` : `${m} min`;
+  return diffMs < 0 ? { text: `⚠️ ${text} před spánkem`, warn: true } : { text: `${text} po spánku`, warn: false };
+}
+
+function wireDiff(stoolDateEl, stoolTimeEl, itemDateEl, itemTimeEl, diffEl, formatFn) {
+  const format = formatFn || formatDiffHuman;
   function update() {
     const stoolAt = parseDateTime(stoolDateEl.value, stoolTimeEl.value);
     const itemAt = itemTimeEl.value.trim() ? parseDateTime(itemDateEl.value, itemTimeEl.value) : null;
@@ -221,7 +233,7 @@ function wireDiff(stoolDateEl, stoolTimeEl, itemDateEl, itemTimeEl, diffEl) {
       diffEl.classList.remove("field-row-diff--warn");
       return;
     }
-    const { text, warn } = formatDiffHuman(stoolAt, itemAt);
+    const { text, warn } = format(stoolAt, itemAt);
     diffEl.textContent = text;
     diffEl.classList.toggle("field-row-diff--warn", warn);
     diffEl.hidden = false;
@@ -240,8 +252,10 @@ function parseOptionalDateTime(dateEl, timeEl) {
 
 // --- storage ---
 
+// Optional now: untouched stays unsaved (null) rather than defaulting to a
+// value, so it can't be mistaken for a real answer in the overview.
 function clampScale(v, max) {
-  return v >= 1 && v <= max ? v : 1;
+  return typeof v === "number" && v >= 0 && v <= max ? v : null;
 }
 
 function loadEntries() {
@@ -255,10 +269,10 @@ function loadEntries() {
       .map((e) => ({
         ...e,
         stoolType: Math.min(6, Math.max(0, e.stoolType)),
-        urgency: clampScale(e.urgency, 3),
-        bloating: clampScale(e.bloating, 3),
-        pain: clampScale(e.pain, 3),
-        stress: clampScale(e.stress, 5),
+        urgency: clampScale(e.urgency, 2),
+        bloating: clampScale(e.bloating, 2),
+        pain: clampScale(e.pain, 2),
+        stress: clampScale(e.stress, 2),
         tags: Array.isArray(e.tags) ? e.tags : [],
         supplements: Array.isArray(e.supplements) ? e.supplements : [],
       }));
@@ -269,6 +283,17 @@ function loadEntries() {
 
 function saveEntries(entries) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+// Two entries saved in the same minute tie on `at` (seconds are always :00
+// here); array order is chronological (newer pushed last), so that's the
+// tiebreak — otherwise Array#sort's stability would leave the older one
+// first, which reads as "most recent" wherever this is used.
+function sortEntriesDesc(entries) {
+  return entries
+    .map((e, i) => [e, i])
+    .sort(([ea, ia], [eb, ib]) => new Date(eb.at) - new Date(ea.at) || ib - ia)
+    .map(([e]) => e);
 }
 
 // --- elements ---
@@ -294,8 +319,7 @@ const bloatingGroupEl = $("bloatingGroup");
 const painGroupEl = $("painGroup");
 const stressBlockEl = $("stressBlock");
 const stressToggleBtnEl = $("stressToggleBtn");
-const stressSliderEl = $("stressSlider");
-const stressDescEl = $("stressDesc");
+const stressGroupEl = $("stressGroup");
 const noteInputEl = $("noteInput");
 const noteToggleBtnEl = $("noteToggleBtn");
 const saveBtnEl = $("saveBtn");
@@ -364,8 +388,7 @@ const editSupplementsGridEl = $("editSupplementsGrid");
 const editUrgencyGroupEl = $("editUrgencyGroup");
 const editBloatingGroupEl = $("editBloatingGroup");
 const editPainGroupEl = $("editPainGroup");
-const editStressSliderEl = $("editStressSlider");
-const editStressDescEl = $("editStressDesc");
+const editStressGroupEl = $("editStressGroup");
 const editNoteInputEl = $("editNoteInput");
 const editFormErrorEl = $("editFormError");
 const editDeleteBtnEl = $("editDeleteBtn");
@@ -415,10 +438,6 @@ function updateStoolDisplay(sliderEl, descEl) {
     : "";
 }
 
-function updateScaleDesc(sliderEl, descEl, labels) {
-  descEl.textContent = labels[Number(sliderEl.value)] || "";
-}
-
 function createChoiceState(container, labels, initial, onChange) {
   let value = initial;
   function render() {
@@ -448,18 +467,19 @@ function createChoiceState(container, labels, initial, onChange) {
   };
 }
 
-const urgencyChoice = createChoiceState(urgencyGroupEl, URGENCY_LABELS, 1);
-const bloatingChoice = createChoiceState(bloatingGroupEl, BLOATING_LABELS, 1);
-const painChoice = createChoiceState(painGroupEl, PAIN_LABELS, 1);
-const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, URGENCY_LABELS, 1, () => updateEditSaveState());
-const editBloatingChoice = createChoiceState(editBloatingGroupEl, BLOATING_LABELS, 1, () => updateEditSaveState());
-const editPainChoice = createChoiceState(editPainGroupEl, PAIN_LABELS, 1, () => updateEditSaveState());
+// initial null: an untouched scale stays unselected (and unsaved) rather
+// than defaulting to a value the user never actually chose.
+const urgencyChoice = createChoiceState(urgencyGroupEl, SCALE_LABELS, null);
+const bloatingChoice = createChoiceState(bloatingGroupEl, SCALE_LABELS, null);
+const painChoice = createChoiceState(painGroupEl, SCALE_LABELS, null);
+const stressChoice = createChoiceState(stressGroupEl, SCALE_LABELS, null);
+const editUrgencyChoice = createChoiceState(editUrgencyGroupEl, SCALE_LABELS, null, () => updateEditSaveState());
+const editBloatingChoice = createChoiceState(editBloatingGroupEl, SCALE_LABELS, null, () => updateEditSaveState());
+const editPainChoice = createChoiceState(editPainGroupEl, SCALE_LABELS, null, () => updateEditSaveState());
+const editStressChoice = createChoiceState(editStressGroupEl, SCALE_LABELS, null, () => updateEditSaveState());
 
 stoolSliderEl.addEventListener("input", () => updateStoolDisplay(stoolSliderEl, stoolDescEl));
 editStoolSliderEl.addEventListener("input", () => updateStoolDisplay(editStoolSliderEl, editStoolDescEl));
-
-stressSliderEl.addEventListener("input", () => updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS));
-editStressSliderEl.addEventListener("input", () => updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS));
 
 // --- edit overlay: track unsaved changes ---
 
@@ -479,7 +499,7 @@ function getEditFormState() {
     sleepTime: editSleepTimeInputEl.value,
     tags: Array.from(editTags).sort(),
     supplements: Array.from(editSupplements).sort(),
-    stress: editStressSliderEl.value,
+    stress: editStressChoice.get(),
     note: editNoteInputEl.value,
   });
 }
@@ -497,7 +517,6 @@ function updateEditSaveState() {
   editFoodTimeInputEl,
   editSleepDateInputEl,
   editSleepTimeInputEl,
-  editStressSliderEl,
   editNoteInputEl,
 ].forEach((el) => el.addEventListener("input", updateEditSaveState));
 
@@ -529,9 +548,9 @@ fillDateOnTime(editFoodDateInputEl, editFoodTimeInputEl, updateEditFoodShortDate
 fillDateOnTime(editSleepDateInputEl, editSleepTimeInputEl, updateEditSleepShortDate);
 
 const updateFormFoodDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
-const updateFormSleepDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, sleepDateInputEl, sleepTimeInputEl, sleepDiffEl);
+const updateFormSleepDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, sleepDateInputEl, sleepTimeInputEl, sleepDiffEl, formatSleepDiffHuman);
 const updateEditFoodDiff = wireDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
-const updateEditSleepDiff = wireDiff(editDateInputEl, editTimeInputEl, editSleepDateInputEl, editSleepTimeInputEl, editSleepDiffEl);
+const updateEditSleepDiff = wireDiff(editDateInputEl, editTimeInputEl, editSleepDateInputEl, editSleepTimeInputEl, editSleepDiffEl, formatSleepDiffHuman);
 
 // window.alert() is silently inert in an installed Android PWA (standalone
 // display mode) — the call returns immediately and nothing appears, so a
@@ -546,13 +565,6 @@ function hideFormError(el) {
   el.hidden = true;
 }
 
-function timeAgoText(ms) {
-  const absMin = Math.max(0, Math.round(ms / 60000));
-  const h = Math.floor(absMin / 60);
-  const m = absMin % 60;
-  return h > 0 ? `${h} h ${m} min` : `${m} min`;
-}
-
 // Sleep is often not filled on every entry, so its line in the summary
 // comes from the most recent entry that actually has it — which may not be
 // the same entry as the rest of the summary.
@@ -562,32 +574,29 @@ function renderLastEntrySummary() {
     lastEntrySummaryEl.hidden = true;
     return;
   }
-  const sorted = [...entries].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const sorted = sortEntriesDesc(entries);
   const last = sorted[0];
   const lastSleep = sorted.find((e) => e.sleepAt);
 
   const at = new Date(last.at);
   const now = new Date();
   const whenText = dateKey(at) === todayKey() ? formatHHMM(at) : `${formatCzechDateShort(at)} ${formatHHMM(at)}`;
+  const last24hCount = entries.filter((e) => {
+    const diff = now - new Date(e.at);
+    return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
+  }).length;
 
   const stoolLabel = STOOL_LABELS[last.stoolType];
   const foodEmoji = last.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
   const suppEmoji = last.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
 
   const lines = [];
-  lines.push(`<span class="last-entry-summary-when">před ${timeAgoText(now - at)} · ${whenText}</span>`);
-  const valueBits = [
-    stoolLabel ? `${last.stoolType} · ${stoolLabel.name}` : null,
-    URGENCY_LABELS[last.urgency],
-    BLOATING_LABELS[last.bloating],
-    PAIN_LABELS[last.pain],
-  ].filter(Boolean);
-  lines.push(valueBits.join(" · "));
-  if (foodEmoji || suppEmoji) {
-    lines.push([foodEmoji, suppEmoji].filter(Boolean).join("  "));
-  }
+  lines.push(`<span class="last-entry-summary-when">(${last24hCount}) Naposledy: ${whenText}</span>`);
+  const typeLine = [stoolLabel ? stoolLabel.name : null, foodEmoji, suppEmoji].filter(Boolean).join("  ");
+  if (typeLine) lines.push(typeLine);
+
   const extras = [];
-  if (last.stress) extras.push(`Stres: ${STRESS_LABELS[last.stress]}`);
+  if (last.stress !== null && last.stress !== undefined) extras.push(`Stres: ${last.stress}`);
   if (lastSleep) {
     const sd = new Date(lastSleep.sleepAt);
     const sleepWhen = dateKey(sd) === todayKey() ? formatHHMM(sd) : `${formatCzechDateShort(sd)} ${formatHHMM(sd)}`;
@@ -602,11 +611,10 @@ function renderLastEntrySummary() {
 function resetForm() {
   stoolSliderEl.value = "1";
   updateStoolDisplay(stoolSliderEl, stoolDescEl);
-  urgencyChoice.set(1);
-  bloatingChoice.set(1);
-  painChoice.set(1);
-  stressSliderEl.value = "1";
-  updateScaleDesc(stressSliderEl, stressDescEl, STRESS_LABELS);
+  urgencyChoice.set(null);
+  bloatingChoice.set(null);
+  painChoice.set(null);
+  stressChoice.set(null);
   const now = new Date();
   stoolDateInputEl.value = dateKey(now);
   updateStoolShortDate();
@@ -663,7 +671,7 @@ function saveNewEntry() {
     sleepAt: sleep.at ? sleep.at.toISOString() : null,
     tags: Array.from(formTags),
     supplements: Array.from(formSupplements),
-    stress: Number(stressSliderEl.value),
+    stress: stressChoice.get(),
     note: noteInputEl.value.trim(),
   };
   const entries = loadEntries();
@@ -856,6 +864,13 @@ function daysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
 
+// Naléhavost/Nadýmání/Bolest/Stres are optional now, so an average only
+// counts entries where that particular field was actually answered.
+function avgOfField(entries, field) {
+  const withValue = entries.filter((e) => e[field] !== null && e[field] !== undefined);
+  return withValue.length ? (withValue.reduce((sum, e) => sum + e[field], 0) / withValue.length).toFixed(1) : "–";
+}
+
 function renderStats() {
   const entries = loadEntries();
   const { year, month } = statsMonth;
@@ -884,18 +899,10 @@ function renderStats() {
   avgTypeStatEl.textContent = filteredMonthEntries.length
     ? (filteredMonthEntries.reduce((sum, e) => sum + e.stoolType, 0) / filteredMonthEntries.length).toFixed(1)
     : "–";
-  avgUrgencyStatEl.textContent = filteredMonthEntries.length
-    ? (filteredMonthEntries.reduce((sum, e) => sum + e.urgency, 0) / filteredMonthEntries.length).toFixed(1)
-    : "–";
-  avgBloatingStatEl.textContent = filteredMonthEntries.length
-    ? (filteredMonthEntries.reduce((sum, e) => sum + e.bloating, 0) / filteredMonthEntries.length).toFixed(1)
-    : "–";
-  avgPainStatEl.textContent = filteredMonthEntries.length
-    ? (filteredMonthEntries.reduce((sum, e) => sum + e.pain, 0) / filteredMonthEntries.length).toFixed(1)
-    : "–";
-  avgStressStatEl.textContent = filteredMonthEntries.length
-    ? (filteredMonthEntries.reduce((sum, e) => sum + e.stress, 0) / filteredMonthEntries.length).toFixed(1)
-    : "–";
+  avgUrgencyStatEl.textContent = avgOfField(filteredMonthEntries, "urgency");
+  avgBloatingStatEl.textContent = avgOfField(filteredMonthEntries, "bloating");
+  avgPainStatEl.textContent = avgOfField(filteredMonthEntries, "pain");
+  avgStressStatEl.textContent = avgOfField(filteredMonthEntries, "stress");
 
   // stool consistency distribution — always shows the full month (it's the
   // filter control itself); clicking a bar toggles the filter
@@ -992,7 +999,7 @@ function renderHistoryTable(entries) {
     historyNextEl.disabled = true;
     return;
   }
-  const sorted = [...entries].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const sorted = sortEntriesDesc(entries);
   const totalPages = Math.max(1, Math.ceil(sorted.length / HISTORY_PAGE_SIZE));
   historyPage = Math.min(historyPage, totalPages - 1);
   const start = historyPage * HISTORY_PAGE_SIZE;
@@ -1003,7 +1010,7 @@ function renderHistoryTable(entries) {
     const d = new Date(entry.at);
     const tagsText = entry.tags.map((key) => TAGS.find((t) => t.key === key)?.emoji || "").join(" ");
     const foodHint = entry.foodAt ? ` · 🍽️ ${formatDiffHuman(d, new Date(entry.foodAt)).text}` : "";
-    const sleepHint = entry.sleepAt ? ` · 🌙 ${formatDiffHuman(d, new Date(entry.sleepAt)).text}` : "";
+    const sleepHint = entry.sleepAt ? ` · 🌙 ${formatSleepDiffHuman(d, new Date(entry.sleepAt)).text}` : "";
     row.innerHTML = `
       <span class="history-datetime">${formatCzechDate(d)} ${formatHHMM(d)}</span>
       <span class="history-type">${entry.stoolType}</span>
@@ -1040,8 +1047,7 @@ function openEdit(entry) {
   editUrgencyChoice.set(entry.urgency);
   editBloatingChoice.set(entry.bloating);
   editPainChoice.set(entry.pain);
-  editStressSliderEl.value = String(entry.stress);
-  updateScaleDesc(editStressSliderEl, editStressDescEl, STRESS_LABELS);
+  editStressChoice.set(entry.stress);
   if (entry.foodAt) {
     const fd = new Date(entry.foodAt);
     editFoodDateInputEl.value = dateKey(fd);
@@ -1123,7 +1129,7 @@ editSaveBtnEl.addEventListener("click", () => {
     sleepAt: sleep.at ? sleep.at.toISOString() : null,
     tags: Array.from(editTags),
     supplements: Array.from(editSupplements),
-    stress: Number(editStressSliderEl.value),
+    stress: editStressChoice.get(),
     note: editNoteInputEl.value.trim(),
   };
   saveEntries(entries);
