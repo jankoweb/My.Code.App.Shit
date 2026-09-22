@@ -28,6 +28,10 @@ const TAGS = [
   { key: "cibule", emoji: "🧅", label: "Cibule" },
   { key: "nakladane", emoji: "🫙", label: "Nakládané" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
+  { key: "tucne", emoji: "🧈", label: "Tučné" },
+  { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát" },
+  { key: "zelenina", emoji: "🥦", label: "Zelenina" },
+  { key: "ovoce", emoji: "🍎", label: "Ovoce" },
   { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
@@ -41,6 +45,10 @@ const TAG_COMPONENTS = {
   cibule: ["nadymave"],
   nakladane: ["sul", "nadymave"],
   kofein: ["kofein"],
+  tucne: ["tuk"],
+  prefabrikat: ["prefabrikat"],
+  zelenina: ["zelenina"],
+  ovoce: ["ovoce"],
   neobvykle: ["neobvykle"],
 };
 
@@ -53,6 +61,9 @@ const COMPONENTS = [
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
   { key: "nadymave", emoji: "💨", label: "Nadýmavé" },
   { key: "kofein", emoji: "☕", label: "Kofein" },
+  { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát" },
+  { key: "zelenina", emoji: "🥦", label: "Zelenina" },
+  { key: "ovoce", emoji: "🍎", label: "Ovoce" },
   { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
@@ -69,6 +80,7 @@ const SUPPLEMENTS = [
   { key: "d", emoji: "☀️", label: "D" },
   { key: "b", emoji: "⚡", label: "B" },
   { key: "e", emoji: "🫒", label: "E" },
+  { key: "laktobacily", emoji: "🦠", label: "Laktobacily" },
 ];
 
 const MONTH_NAMES = [
@@ -134,32 +146,40 @@ function parseDateTime(dateText, timeText) {
   return new Date(d.year, d.month - 1, d.day, t.h, t.m, 0);
 }
 
-function formatDiffHuman(stoolDate, foodDate) {
-  const diffMs = stoolDate - foodDate;
+function formatDiffHuman(stoolDate, itemDate) {
+  const diffMs = stoolDate - itemDate;
   const absMin = Math.round(Math.abs(diffMs) / 60000);
   const h = Math.floor(absMin / 60);
   const m = absMin % 60;
   const text = h > 0 ? `${h} h ${m} min` : `${m} min`;
-  return diffMs < 0 ? { text: `⚠️ jídlo je ${text} PO stolici`, warn: true } : { text: `jedl jsi ${text} před stolicí`, warn: false };
+  return diffMs < 0 ? { text: `⚠️ po ${text}`, warn: true } : { text: `před ${text}`, warn: false };
 }
 
-function wireFoodDiff(stoolDateEl, stoolTimeEl, foodDateEl, foodTimeEl, diffEl) {
+function wireDiff(stoolDateEl, stoolTimeEl, itemDateEl, itemTimeEl, diffEl) {
   function update() {
     const stoolAt = parseDateTime(stoolDateEl.value, stoolTimeEl.value);
-    const foodAt = foodTimeEl.value.trim() ? parseDateTime(foodDateEl.value, foodTimeEl.value) : null;
-    if (!stoolAt || !foodAt) {
+    const itemAt = itemTimeEl.value.trim() ? parseDateTime(itemDateEl.value, itemTimeEl.value) : null;
+    if (!stoolAt || !itemAt) {
       diffEl.hidden = true;
       diffEl.textContent = "";
-      diffEl.classList.remove("food-diff--warn");
+      diffEl.classList.remove("field-row-diff--warn");
       return;
     }
-    const { text, warn } = formatDiffHuman(stoolAt, foodAt);
+    const { text, warn } = formatDiffHuman(stoolAt, itemAt);
     diffEl.textContent = text;
-    diffEl.classList.toggle("food-diff--warn", warn);
+    diffEl.classList.toggle("field-row-diff--warn", warn);
     diffEl.hidden = false;
   }
-  [stoolDateEl, stoolTimeEl, foodDateEl, foodTimeEl].forEach((el) => el.addEventListener("input", update));
+  [stoolDateEl, stoolTimeEl, itemDateEl, itemTimeEl].forEach((el) => el.addEventListener("input", update));
   return update;
+}
+
+// Food/sleep date+time are optional; if only the time was given, treat the
+// date as missing rather than silently guessing.
+function parseOptionalDateTime(dateEl, timeEl) {
+  if (!timeEl.value.trim()) return { at: null, error: false };
+  const at = parseDateTime(dateEl.value, timeEl.value);
+  return at ? { at, error: false } : { at: null, error: true };
 }
 
 // --- storage ---
@@ -201,9 +221,13 @@ const stoolSliderEl = $("stoolSlider");
 const stoolDescEl = $("stoolDesc");
 const stoolDateInputEl = $("stoolDateInput");
 const stoolTimeInputEl = $("stoolTimeInput");
+const stoolDateTimeWrapEl = $("stoolDateTimeWrap");
 const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
+const sleepDateInputEl = $("sleepDateInput");
+const sleepTimeInputEl = $("sleepTimeInput");
+const sleepDiffEl = $("sleepDiff");
 const tagsGridEl = $("tagsGrid");
 const supplementsGridEl = $("supplementsGrid");
 const urgencyGroupEl = $("urgencyGroup");
@@ -212,6 +236,7 @@ const painGroupEl = $("painGroup");
 const stressSliderEl = $("stressSlider");
 const stressDescEl = $("stressDesc");
 const noteInputEl = $("noteInput");
+const noteToggleBtnEl = $("noteToggleBtn");
 const saveBtnEl = $("saveBtn");
 const formErrorEl = $("formError");
 
@@ -270,6 +295,9 @@ const editStoolDescEl = $("editStoolDesc");
 const editFoodDateInputEl = $("editFoodDateInput");
 const editFoodTimeInputEl = $("editFoodTimeInput");
 const editFoodDiffEl = $("editFoodDiff");
+const editSleepDateInputEl = $("editSleepDateInput");
+const editSleepTimeInputEl = $("editSleepTimeInput");
+const editSleepDiffEl = $("editSleepDiff");
 const editTagsGridEl = $("editTagsGrid");
 const editSupplementsGridEl = $("editSupplementsGrid");
 const editUrgencyGroupEl = $("editUrgencyGroup");
@@ -380,6 +408,8 @@ function getEditFormState() {
     pain: editPainChoice.get(),
     foodDate: editFoodDateInputEl.value,
     foodTime: editFoodTimeInputEl.value,
+    sleepDate: editSleepDateInputEl.value,
+    sleepTime: editSleepTimeInputEl.value,
     tags: Array.from(editTags).sort(),
     supplements: Array.from(editSupplements).sort(),
     stress: editStressSliderEl.value,
@@ -392,24 +422,38 @@ function updateEditSaveState() {
   editSaveBtnEl.disabled = !changed;
 }
 
-[editDateInputEl, editTimeInputEl, editStoolSliderEl, editFoodDateInputEl, editFoodTimeInputEl, editStressSliderEl, editNoteInputEl].forEach((el) =>
-  el.addEventListener("input", updateEditSaveState)
-);
+[
+  editDateInputEl,
+  editTimeInputEl,
+  editStoolSliderEl,
+  editFoodDateInputEl,
+  editFoodTimeInputEl,
+  editSleepDateInputEl,
+  editSleepTimeInputEl,
+  editStressSliderEl,
+  editNoteInputEl,
+].forEach((el) => el.addEventListener("input", updateEditSaveState));
 
-const updateFormFoodDiff = wireFoodDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
-const updateEditFoodDiff = wireFoodDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
-
-// Food date/time is optional and starts empty — a date sitting there with no
-// time doesn't mean anything, so it's only worth defaulting once the time is
-// actually set (to today, the common case).
-function fillFoodDateOnTime(dateEl, timeEl) {
+// Food/sleep date/time is optional and starts empty — a date sitting there
+// with no time doesn't mean anything, so it's only worth defaulting once the
+// time is actually set (to today, the common case). Wired before wireDiff
+// below so the diff calculation below sees the auto-filled date on the same
+// "input" event, not one event later.
+function fillDateOnTime(dateEl, timeEl) {
   timeEl.addEventListener("input", () => {
     if (timeEl.value && !dateEl.value) dateEl.value = dateKey(new Date());
   });
 }
 
-fillFoodDateOnTime(foodDateInputEl, foodTimeInputEl);
-fillFoodDateOnTime(editFoodDateInputEl, editFoodTimeInputEl);
+fillDateOnTime(foodDateInputEl, foodTimeInputEl);
+fillDateOnTime(sleepDateInputEl, sleepTimeInputEl);
+fillDateOnTime(editFoodDateInputEl, editFoodTimeInputEl);
+fillDateOnTime(editSleepDateInputEl, editSleepTimeInputEl);
+
+const updateFormFoodDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, foodDateInputEl, foodTimeInputEl, foodDiffEl);
+const updateFormSleepDiff = wireDiff(stoolDateInputEl, stoolTimeInputEl, sleepDateInputEl, sleepTimeInputEl, sleepDiffEl);
+const updateEditFoodDiff = wireDiff(editDateInputEl, editTimeInputEl, editFoodDateInputEl, editFoodTimeInputEl, editFoodDiffEl);
+const updateEditSleepDiff = wireDiff(editDateInputEl, editTimeInputEl, editSleepDateInputEl, editSleepTimeInputEl, editSleepDiffEl);
 
 // window.alert() is silently inert in an installed Android PWA (standalone
 // display mode) — the call returns immediately and nothing appears, so a
@@ -438,12 +482,18 @@ function resetForm() {
   foodDateInputEl.value = "";
   foodTimeInputEl.value = "";
   updateFormFoodDiff();
+  sleepDateInputEl.value = "";
+  sleepTimeInputEl.value = "";
+  updateFormSleepDiff();
   hideFormError(formErrorEl);
   formTags = new Set();
   buildTagButtons(tagsGridEl, TAGS, formTags);
   formSupplements = new Set();
   buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements);
   noteInputEl.value = "";
+  noteInputEl.hidden = true;
+  noteToggleBtnEl.classList.remove("active");
+  stoolDateTimeWrapEl.hidden = true;
 }
 
 function saveNewEntry() {
@@ -452,13 +502,15 @@ function saveNewEntry() {
     showFormError(formErrorEl, "Chybí datum nebo čas stolice — doplň je nahoře vedle ikony appky.");
     return;
   }
-  let foodAt = null;
-  if (foodTimeInputEl.value.trim()) {
-    foodAt = parseDateTime(foodDateInputEl.value, foodTimeInputEl.value);
-    if (!foodAt) {
-      showFormError(formErrorEl, "Chybí datum jídla — čas jídla je vyplněný, ale datum ne.");
-      return;
-    }
+  const food = parseOptionalDateTime(foodDateInputEl, foodTimeInputEl);
+  if (food.error) {
+    showFormError(formErrorEl, "Chybí datum jídla — čas jídla je vyplněný, ale datum ne.");
+    return;
+  }
+  const sleep = parseOptionalDateTime(sleepDateInputEl, sleepTimeInputEl);
+  if (sleep.error) {
+    showFormError(formErrorEl, "Chybí datum spánku — čas spánku je vyplněný, ale datum ne.");
+    return;
   }
   hideFormError(formErrorEl);
   const entry = {
@@ -469,7 +521,8 @@ function saveNewEntry() {
     urgency: urgencyChoice.get(),
     bloating: bloatingChoice.get(),
     pain: painChoice.get(),
-    foodAt: foodAt ? foodAt.toISOString() : null,
+    foodAt: food.at ? food.at.toISOString() : null,
+    sleepAt: sleep.at ? sleep.at.toISOString() : null,
     tags: Array.from(formTags),
     supplements: Array.from(formSupplements),
     stress: Number(stressSliderEl.value),
@@ -482,7 +535,46 @@ function saveNewEntry() {
   openStatsView();
 }
 
-saveBtnEl.addEventListener("click", saveNewEntry);
+// A short tap on Spláchnout saves immediately with the current date/time
+// (hidden by default, prefilled to now). A long press instead reveals that
+// date/time so it can be backdated before saving — the click that follows
+// the long-press release is suppressed so it doesn't also save.
+const SAVE_LONG_PRESS_MS = 500;
+let saveLongPressTimer = null;
+let saveLongPressActive = false;
+
+function revealStoolDateTime() {
+  stoolDateTimeWrapEl.hidden = false;
+  stoolDateTimeWrapEl.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+saveBtnEl.addEventListener("pointerdown", () => {
+  saveLongPressActive = false;
+  saveLongPressTimer = setTimeout(() => {
+    saveLongPressActive = true;
+    revealStoolDateTime();
+  }, SAVE_LONG_PRESS_MS);
+});
+
+["pointerup", "pointerleave", "pointercancel"].forEach((evt) =>
+  saveBtnEl.addEventListener(evt, () => {
+    clearTimeout(saveLongPressTimer);
+  })
+);
+
+saveBtnEl.addEventListener("click", () => {
+  if (saveLongPressActive) {
+    saveLongPressActive = false;
+    return;
+  }
+  saveNewEntry();
+});
+
+noteToggleBtnEl.addEventListener("click", () => {
+  noteInputEl.hidden = !noteInputEl.hidden;
+  noteToggleBtnEl.classList.toggle("active", !noteInputEl.hidden);
+  if (!noteInputEl.hidden) noteInputEl.focus();
+});
 
 // --- menu ---
 
@@ -784,11 +876,12 @@ function renderHistoryTable(entries) {
     row.className = "history-row";
     const d = new Date(entry.at);
     const tagsText = entry.tags.map((key) => TAGS.find((t) => t.key === key)?.emoji || "").join(" ");
-    const foodHint = entry.foodAt ? ` · ${formatDiffHuman(d, new Date(entry.foodAt)).text}` : "";
+    const foodHint = entry.foodAt ? ` · 🍽️ ${formatDiffHuman(d, new Date(entry.foodAt)).text}` : "";
+    const sleepHint = entry.sleepAt ? ` · 🌙 ${formatDiffHuman(d, new Date(entry.sleepAt)).text}` : "";
     row.innerHTML = `
       <span class="history-datetime">${formatCzechDate(d)} ${formatHHMM(d)}</span>
       <span class="history-type">${entry.stoolType}</span>
-      <span class="history-tags">${tagsText}${entry.note ? " · " + entry.note : ""}${foodHint}</span>
+      <span class="history-tags">${tagsText}${entry.note ? " · " + entry.note : ""}${foodHint}${sleepHint}</span>
     `;
     row.addEventListener("click", () => openEdit(entry));
     historyTableEl.appendChild(row);
@@ -831,6 +924,15 @@ function openEdit(entry) {
     editFoodTimeInputEl.value = "";
   }
   updateEditFoodDiff();
+  if (entry.sleepAt) {
+    const sd = new Date(entry.sleepAt);
+    editSleepDateInputEl.value = dateKey(sd);
+    editSleepTimeInputEl.value = formatHHMM(sd);
+  } else {
+    editSleepDateInputEl.value = "";
+    editSleepTimeInputEl.value = "";
+  }
+  updateEditSleepDiff();
   editTags = new Set(entry.tags);
   buildTagButtons(editTagsGridEl, TAGS, editTags, updateEditSaveState);
   editSupplements = new Set(entry.supplements);
@@ -863,13 +965,15 @@ editSaveBtnEl.addEventListener("click", () => {
     return;
   }
   const at = new Date(dateParsed.year, dateParsed.month - 1, dateParsed.day, timeParsed.h, timeParsed.m, 0);
-  let foodAt = null;
-  if (editFoodTimeInputEl.value.trim()) {
-    foodAt = parseDateTime(editFoodDateInputEl.value, editFoodTimeInputEl.value);
-    if (!foodAt) {
-      showFormError(editFormErrorEl, "Chybí datum jídla — čas jídla je vyplněný, ale datum ne.");
-      return;
-    }
+  const food = parseOptionalDateTime(editFoodDateInputEl, editFoodTimeInputEl);
+  if (food.error) {
+    showFormError(editFormErrorEl, "Chybí datum jídla — čas jídla je vyplněný, ale datum ne.");
+    return;
+  }
+  const sleep = parseOptionalDateTime(editSleepDateInputEl, editSleepTimeInputEl);
+  if (sleep.error) {
+    showFormError(editFormErrorEl, "Chybí datum spánku — čas spánku je vyplněný, ale datum ne.");
+    return;
   }
   hideFormError(editFormErrorEl);
   const entries = loadEntries();
@@ -886,7 +990,8 @@ editSaveBtnEl.addEventListener("click", () => {
     urgency: editUrgencyChoice.get(),
     bloating: editBloatingChoice.get(),
     pain: editPainChoice.get(),
-    foodAt: foodAt ? foodAt.toISOString() : null,
+    foodAt: food.at ? food.at.toISOString() : null,
+    sleepAt: sleep.at ? sleep.at.toISOString() : null,
     tags: Array.from(editTags),
     supplements: Array.from(editSupplements),
     stress: Number(editStressSliderEl.value),

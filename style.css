@@ -57,6 +57,10 @@ main {
   min-width: 0;
 }
 
+.app-header-datetime[hidden] {
+  display: none;
+}
+
 .app-header-datetime .edit-field-input {
   flex: 1;
   min-width: 0;
@@ -226,6 +230,51 @@ main {
   padding: 8px;
 }
 
+.field-row--inline {
+  flex-wrap: wrap;
+}
+
+.field-row--inline .field-row-label {
+  white-space: nowrap;
+}
+
+.field-row--inline .edit-field-input {
+  flex: 1 1 0;
+  padding: 6px 4px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.field-row--inline input[type="date"] {
+  min-width: 76px;
+}
+
+.field-row--inline input[type="time"] {
+  min-width: 80px;
+}
+
+.field-row-diff {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.field-row-diff--warn {
+  color: var(--accent);
+}
+
+/* Chromium (the target Android PWA browser) lets the year sub-field of a
+   date input be hidden individually — used to keep field-row--inline rows
+   on one line. No-op elsewhere, so it's safe to apply globally. */
+input[type="date"]::-webkit-datetime-edit-year-field {
+  display: none;
+}
+
 .choice-row {
   display: flex;
   flex-wrap: wrap;
@@ -251,16 +300,6 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.food-diff {
-  font-size: 12px;
-  color: var(--muted);
-  margin: -6px 0 16px 2px;
-}
-
-.food-diff--warn {
-  color: var(--accent);
 }
 
 .form-error {
@@ -339,8 +378,36 @@ main {
   font-family: inherit;
 }
 
+.save-row {
+  display: flex;
+  gap: 8px;
+}
+
+.note-toggle-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-2);
+  color: var(--fg);
+  font-size: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.note-toggle-btn:hover {
+  background: var(--hover);
+}
+
+.note-toggle-btn.active {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #0d1a0d;
+  font-weight: 700;
+}
+
 .save-btn {
   display: block;
+  flex: 1;
   width: 100%;
   background: var(--ok);
   border: none;
@@ -354,6 +421,13 @@ main {
 
 .save-btn:hover {
   filter: brightness(1.08);
+}
+
+.save-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 8px;
 }
 
 /* views */
