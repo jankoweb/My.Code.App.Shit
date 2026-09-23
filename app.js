@@ -35,9 +35,12 @@ function saveStoolLabels(labels) {
 
 let STOOL_LABELS = loadStoolLabels();
 
-// Naléhavost/Nadýmání/Bolest/Stres share one 0-2 scale, shown as bare
-// numbers (no word labels) — see createChoiceState below.
-const SCALE_LABELS = { 0: "0", 1: "1", 2: "2" };
+// Naléhavost/Nadýmání/Bolest/Stres share one scale, shown as bare numbers
+// (no word labels) — see createChoiceState below. No button for 0: leaving
+// the whole group untouched already means "0/not answered" (stored as
+// null, see clampScale), so a 0 button would just be a second way to say
+// the same thing.
+const SCALE_LABELS = { 1: "1", 2: "2" };
 
 // Tags on the entry screen are food items (fast to recognize & tap).
 // Internally each maps to one or more underlying components, so charts and
@@ -53,12 +56,12 @@ const TAGS = [
   { key: "uzeniny", emoji: "🍖", label: "Uzeniny, šunky" },
   { key: "tucne", emoji: "🧈", label: "Tučné" },
   { key: "smazene", emoji: "🍟", label: "Smažené" },
-  { key: "palive", emoji: "🌶️", label: "Pálivé" },
-  { key: "sladke", emoji: "🍫", label: "Sladké", breakAfter: true },
+  { key: "palive", emoji: "🌶️", label: "Pálivé", breakAfter: true },
   { key: "cibule", emoji: "🧅", label: "Cibule" },
   { key: "zelenina", emoji: "🥦", label: "Zelenina" },
   { key: "ovoce", emoji: "🍎", label: "Ovoce", breakAfter: true },
   { key: "kofein", emoji: "☕", label: "Kofein" },
+  { key: "sladke", emoji: "🍫", label: "Sladké" },
   { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát", breakAfter: true },
   { key: "nakladane", emoji: "🫙", label: "Nakládané" },
   { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
@@ -109,7 +112,7 @@ const SUPPLEMENTS = [
   { key: "d", emoji: "☀️", label: "D" },
   { key: "b", emoji: "🥚", label: "B" },
   { key: "e", emoji: "🫒", label: "E" },
-  { key: "laktobacily", emoji: "🥛", label: "Lakto" },
+  { key: "laktobacily", emoji: "🦠", label: "Lakto" },
 ];
 
 const MONTH_NAMES = [
@@ -436,13 +439,21 @@ let formSupplements = new Set();
 let editSupplements = new Set();
 let editingId = null;
 
-function buildTagButtons(container, items, tagSet, onChange) {
+// stacked: icon above label instead of side by side — used for supplements
+// so every button is the same height regardless of label length (a plain
+// side-by-side layout let the one longer label wrap onto its own second
+// line while the one-letter ones stayed single-line).
+function buildTagButtons(container, items, tagSet, onChange, { stacked } = {}) {
   container.innerHTML = "";
   items.forEach((tag) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "tag-btn";
-    btn.textContent = `${tag.emoji} ${tag.label}`;
+    btn.className = stacked ? "tag-btn tag-btn--stacked" : "tag-btn";
+    if (stacked) {
+      btn.innerHTML = `<span class="tag-btn-icon">${tag.emoji}</span><span class="tag-btn-label">${tag.label}</span>`;
+    } else {
+      btn.textContent = `${tag.emoji} ${tag.label}`;
+    }
     if (tagSet.has(tag.key)) btn.classList.add("active");
     btn.addEventListener("click", () => {
       if (tagSet.has(tag.key)) {
@@ -598,18 +609,17 @@ function hideFormError(el) {
   el.hidden = true;
 }
 
-// Flat comma-separated list — no label prefix, no dashes: "datum, čas, typ
-// (číslo), ikony, Stres: X, čas spánku". The older of the two listed entries
-// gets an extra "(N h zpátky)" tacked on by the caller.
-function entrySummaryLine(entry) {
+// Flat comma-separated list, one entry = one line (wraps only if it has to,
+// never truncated): "datum, čas (N h zpátky), typ (číslo), ikony, Stres: X,
+// čas spánku".
+function entrySummaryLine(entry, hoursAgo) {
   const at = new Date(entry.at);
   const stoolLabel = STOOL_LABELS[entry.stoolType];
   const foodEmoji = entry.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
   const suppEmoji = entry.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
   const icons = `${foodEmoji}${suppEmoji}`;
   const parts = [
-    formatCzechDateShort(at),
-    formatHHMM(at),
+    `${formatCzechDateShort(at)}, ${formatHHMM(at)} (${hoursAgo} h zpátky)`,
     stoolLabel ? `${stoolLabel.name} (${entry.stoolType})` : null,
     icons || null,
   ];
@@ -624,12 +634,10 @@ function renderLastEntrySummary() {
     lastEntrySummaryEl.hidden = true;
     return;
   }
-  const sorted = sortEntriesDesc(entries);
-  const lines = [entrySummaryLine(sorted[0])];
-  if (sorted[1]) {
-    const hoursAgo = Math.round((new Date() - new Date(sorted[1].at)) / 3600000);
-    lines.push(`${entrySummaryLine(sorted[1])} (${hoursAgo} h zpátky)`);
-  }
+  const now = new Date();
+  const lines = sortEntriesDesc(entries)
+    .slice(0, 2)
+    .map((e) => entrySummaryLine(e, Math.round((now - new Date(e.at)) / 3600000)));
   lastEntrySummaryEl.innerHTML = lines.map((line) => `<div>${line}</div>`).join("");
   lastEntrySummaryEl.hidden = false;
 }
@@ -657,7 +665,7 @@ function resetForm() {
   formTags = new Set();
   buildTagButtons(tagsGridEl, TAGS, formTags);
   formSupplements = new Set();
-  buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements);
+  buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements, null, { stacked: true });
   noteInputEl.value = "";
   noteInputEl.hidden = true;
   noteToggleBtnEl.classList.remove("active");
@@ -742,11 +750,19 @@ function hideAllOverlays() {
   });
 }
 
+// "Zahodit záznam" only makes sense while the main form is the visible
+// screen — resetting it from inside Přehled/Nastavení would be a no-op the
+// user can't even see happen.
+function updateDiscardVisibility() {
+  discardBtnEl.hidden = overlayStack.length > 0;
+}
+
 function openOverlay(el) {
   hideAllOverlays();
   el.hidden = false;
   overlayStack.push(el);
   history.pushState({ shitOverlay: true }, "");
+  updateDiscardVisibility();
 }
 
 window.addEventListener("popstate", () => {
@@ -754,6 +770,7 @@ window.addEventListener("popstate", () => {
   const previous = overlayStack[overlayStack.length - 1];
   hideAllOverlays();
   if (previous) previous.hidden = false;
+  updateDiscardVisibility();
 });
 
 function goBack() {
@@ -762,6 +779,7 @@ function goBack() {
   } else {
     overlayStack = [];
     hideAllOverlays();
+    updateDiscardVisibility();
   }
 }
 
@@ -1078,7 +1096,7 @@ function openEdit(entry) {
   editTags = new Set(entry.tags);
   buildTagButtons(editTagsGridEl, TAGS, editTags, updateEditSaveState);
   editSupplements = new Set(entry.supplements);
-  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements, updateEditSaveState);
+  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements, updateEditSaveState, { stacked: true });
   editNoteInputEl.value = entry.note || "";
   editOverlayEl.hidden = false;
   editSnapshot = getEditFormState();
@@ -1256,9 +1274,9 @@ renderStoolLabelsEditor();
 
 resetForm();
 
-const buildFooterEl = $("buildFooter");
-if (buildFooterEl && window.BUILD_INFO) {
+const menuVersionInfoEl = $("menuVersionInfo");
+if (menuVersionInfoEl && window.BUILD_INFO) {
   const { sha, time } = window.BUILD_INFO;
   const timeText = time ? new Date(time).toLocaleString("cs-CZ") : "lokální vývoj";
-  buildFooterEl.textContent = `verze ${sha} · build ${timeText}`;
+  menuVersionInfoEl.textContent = `verze ${sha} · build ${timeText}`;
 }

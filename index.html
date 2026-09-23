@@ -12,20 +12,25 @@
 </head>
 <body>
 
+  <!-- Fixed, shared across every screen (main form, Přehled, Nastavení) — not
+       part of .app-header, since #statsView/#settingsView are full-screen
+       overlays that would otherwise cover a menu button living inside <main>. -->
+  <div class="topbar">
+    <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
+    <div id="menu" class="menu" hidden>
+      <button id="showStatsBtn" class="menu-item">Přehled</button>
+      <button id="settingsBtn" class="menu-item">Nastavení</button>
+      <button id="discardBtn" class="menu-item menu-item--danger">Zahodit záznam</button>
+      <div class="menu-item-static" id="menuVersionInfo"></div>
+    </div>
+  </div>
+
   <main>
     <div class="app-header">
       <h1 class="app-title">💩</h1>
       <div class="app-header-datetime" id="stoolDateTimeWrap">
         <input type="date" id="stoolDateInput" class="edit-field-input">
         <input type="time" id="stoolTimeInput" class="edit-field-input" step="60">
-      </div>
-      <div class="topbar">
-        <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
-        <div id="menu" class="menu" hidden>
-          <button id="showStatsBtn" class="menu-item">Přehled</button>
-          <button id="settingsBtn" class="menu-item">Nastavení</button>
-          <button id="discardBtn" class="menu-item menu-item--danger">Zahodit záznam</button>
-        </div>
       </div>
     </div>
 
@@ -87,7 +92,6 @@
         <button id="noteToggleBtn" type="button" class="note-toggle-btn" aria-label="Poznámka">📝</button>
         <button id="saveBtn" class="save-btn">🚽 <strong>Spláchnout</strong> <span class="save-btn-hint">(uložit)</span></button>
       </div>
-      <div id="buildFooter" class="build-footer"></div>
     </div>
   </div>
 
@@ -113,19 +117,19 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat" data-hint="Průměrná naléhavost za měsíc (0–2, jen záznamy kde bylo vyplněno).">
+      <div class="stat" data-hint="Průměrná naléhavost za měsíc (1–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgUrgencyStat">–</div>
         <div class="stat-label">Ø naléhavost</div>
       </div>
-      <div class="stat" data-hint="Průměrné nadýmání za měsíc (0–2, jen záznamy kde bylo vyplněno).">
+      <div class="stat" data-hint="Průměrné nadýmání za měsíc (1–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgBloatingStat">–</div>
         <div class="stat-label">Ø nadýmání</div>
       </div>
-      <div class="stat" data-hint="Průměrná bolest/křeče za měsíc (0–2, jen záznamy kde bylo vyplněno).">
+      <div class="stat" data-hint="Průměrná bolest/křeče za měsíc (1–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgPainStat">–</div>
         <div class="stat-label">Ø bolest</div>
       </div>
-      <div class="stat" data-hint="Průměrný stres za měsíc (0–2, jen záznamy kde bylo vyplněno).">
+      <div class="stat" data-hint="Průměrný stres za měsíc (1–2, jen záznamy kde bylo vyplněno).">
         <div class="stat-value" id="avgStressStat">–</div>
         <div class="stat-label">Ø stres</div>
       </div>

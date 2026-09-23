@@ -60,6 +60,9 @@ main {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
+  /* Reserves the space the fixed .topbar floats over, now that it's no
+     longer a real flex child here (see .topbar comment in index.html). */
+  padding-right: 52px;
 }
 
 .app-title {
@@ -86,8 +89,15 @@ main {
 
 /* topbar / menu */
 
+/* Fixed and shared across every screen — #statsView/#settingsView are
+   full-screen overlays (z-index 30) that would otherwise cover a menu
+   button living inside <main>, which is exactly what made "Přehled"
+   unreachable once you were already inside another screen. */
 .topbar {
-  position: relative;
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top));
+  right: 16px;
+  z-index: 40;
 }
 
 .menu-btn {
@@ -133,12 +143,18 @@ main {
   background: var(--hover);
 }
 
+.menu-item[hidden] {
+  display: none;
+}
+
 .menu-item--danger {
   color: var(--accent);
   border-top: 1px solid var(--line);
 }
 
 .menu-item-static {
+  display: block;
+  padding: 10px 14px;
   color: var(--muted);
   font-size: 12px;
   border-top: 1px solid var(--line);
@@ -272,6 +288,16 @@ main {
   gap: 6px;
 }
 
+/* Without a .field-row/.field-row--inline ancestor here, these buttons fell
+   back to .edit-field-input's own margin-bottom:20px and 16px/10px padding —
+   much taller than the Stres widget's number buttons, so the two boxes
+   didn't line up. Sized to match instead. */
+.sleep-widget-fields .edit-field-input {
+  margin-bottom: 0;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
 .sleep-widget-fields .dt-btn--date {
   flex: 0 0 52px;
   min-width: 52px;
@@ -286,6 +312,13 @@ main {
   display: block;
   text-align: center;
   margin-top: 4px;
+}
+
+/* Recurring bug class in this file: an explicit display on the class wins
+   the specificity tie against the [hidden] attribute's UA display:none,
+   silently keeping the (empty but margined) element in flow. */
+.sleep-widget-diff[hidden] {
+  display: none;
 }
 
 /* form fields */
@@ -489,6 +522,29 @@ input.dt-hidden-input {
   text-align: center;
 }
 
+/* Icon above label instead of side by side, so every supplement button is
+   the same height regardless of label length (see buildTagButtons). */
+.tag-btn--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tag-btn-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tag-btn-label {
+  font-size: 11px;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tag-btn {
   background: var(--card);
   border: 1px solid var(--line);
@@ -596,7 +652,7 @@ input.dt-hidden-input {
   gap: 10px;
   border-bottom: 2px solid var(--line);
   margin: -16px -16px 16px;
-  padding: 12px 16px;
+  padding: 12px 56px 12px 16px;
 }
 
 .view-back {
@@ -1019,11 +1075,3 @@ input.dt-hidden-input {
   margin-bottom: 0;
 }
 
-/* build footer */
-
-.build-footer {
-  margin-top: 24px;
-  text-align: center;
-  color: #4a4a4a;
-  font-size: 11px;
-}
