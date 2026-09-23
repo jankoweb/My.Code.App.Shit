@@ -17,7 +17,7 @@
       <h1 class="app-title">💩</h1>
       <div class="app-header-datetime" id="stoolDateTimeWrap">
         <input type="date" id="stoolDateInput" class="edit-field-input">
-        <input type="time" id="stoolTimeInput" class="edit-field-input">
+        <input type="time" id="stoolTimeInput" class="edit-field-input" step="60">
       </div>
       <div class="topbar">
         <button id="menuBtn" class="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">⋮</button>
@@ -54,7 +54,7 @@
     <div class="field-row field-row--inline">
       <span class="field-row-label">Jídlo</span>
       <input type="date" id="foodDateInput" class="edit-field-input">
-      <input type="time" id="foodTimeInput" class="edit-field-input">
+      <input type="time" id="foodTimeInput" class="edit-field-input" step="60">
       <span id="foodDiff" class="field-row-diff" hidden></span>
     </div>
 
@@ -67,11 +67,13 @@
         <span class="scale-widget-label">Stres</span>
         <div class="tags-grid tags-grid--choice" id="stressGroup"></div>
       </div>
-      <div class="field-row field-row--inline" id="sleepRow">
-        <span class="field-row-label">Spánek</span>
-        <input type="date" id="sleepDateInput" class="edit-field-input">
-        <input type="time" id="sleepTimeInput" class="edit-field-input">
-        <span id="sleepDiff" class="field-row-diff" hidden></span>
+      <div class="scale-widget" id="sleepRow">
+        <span class="scale-widget-label">Spánek</span>
+        <div class="sleep-widget-fields">
+          <input type="date" id="sleepDateInput" class="edit-field-input">
+          <input type="time" id="sleepTimeInput" class="edit-field-input" step="60">
+        </div>
+        <span id="sleepDiff" class="field-row-diff sleep-widget-diff" hidden></span>
       </div>
     </div>
 
@@ -191,7 +193,7 @@
       <div class="field-row">
         <span class="field-row-label">Kdy (stolice)</span>
         <input type="date" id="editDateInput" class="edit-field-input">
-        <input type="time" id="editTimeInput" class="edit-field-input">
+        <input type="time" id="editTimeInput" class="edit-field-input" step="60">
       </div>
 
       <div class="choice-row">
@@ -222,7 +224,7 @@
       <div class="field-row field-row--inline">
         <span class="field-row-label">Jedl</span>
         <input type="date" id="editFoodDateInput" class="edit-field-input">
-        <input type="time" id="editFoodTimeInput" class="edit-field-input">
+        <input type="time" id="editFoodTimeInput" class="edit-field-input" step="60">
         <span id="editFoodDiff" class="field-row-diff" hidden></span>
       </div>
 
@@ -233,7 +235,7 @@
       <div class="field-row field-row--inline">
         <span class="field-row-label">Spánek</span>
         <input type="date" id="editSleepDateInput" class="edit-field-input">
-        <input type="time" id="editSleepTimeInput" class="edit-field-input">
+        <input type="time" id="editSleepTimeInput" class="edit-field-input" step="60">
         <span id="editSleepDiff" class="field-row-diff" hidden></span>
       </div>
 
