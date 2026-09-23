@@ -43,6 +43,10 @@ const SCALE_LABELS = { 0: "0", 1: "1", 2: "2" };
 // Internally each maps to one or more underlying components, so charts and
 // correlations can still group e.g. "fat" or "gas-inducing" across different
 // foods instead of tracking every food item as an isolated bucket.
+// breakAfter forces a row break in the grid regardless of available width —
+// plain flex-wrap can't guarantee e.g. cibule/zelenina/ovoce land on the
+// same row together, since that depends on how much space is left over from
+// whatever wrapped before them.
 const TAGS = [
   { key: "syry", emoji: "🧀", label: "Sýry" },
   { key: "mlecne", emoji: "🥛", label: "Mléčné výrobky" },
@@ -50,13 +54,13 @@ const TAGS = [
   { key: "tucne", emoji: "🧈", label: "Tučné" },
   { key: "smazene", emoji: "🍟", label: "Smažené" },
   { key: "palive", emoji: "🌶️", label: "Pálivé" },
-  { key: "sladke", emoji: "🍫", label: "Sladké" },
+  { key: "sladke", emoji: "🍫", label: "Sladké", breakAfter: true },
   { key: "cibule", emoji: "🧅", label: "Cibule" },
-  { key: "nakladane", emoji: "🫙", label: "Nakládané" },
-  { key: "kofein", emoji: "☕", label: "Kofein" },
-  { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát" },
   { key: "zelenina", emoji: "🥦", label: "Zelenina" },
-  { key: "ovoce", emoji: "🍎", label: "Ovoce" },
+  { key: "ovoce", emoji: "🍎", label: "Ovoce", breakAfter: true },
+  { key: "kofein", emoji: "☕", label: "Kofein" },
+  { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát", breakAfter: true },
+  { key: "nakladane", emoji: "🫙", label: "Nakládané" },
   { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
 ];
 
@@ -451,6 +455,11 @@ function buildTagButtons(container, items, tagSet, onChange) {
       if (onChange) onChange();
     });
     container.appendChild(btn);
+    if (tag.breakAfter) {
+      const breaker = document.createElement("div");
+      breaker.className = "tags-grid-break";
+      container.appendChild(breaker);
+    }
   });
 }
 
@@ -589,19 +598,24 @@ function hideFormError(el) {
   el.hidden = true;
 }
 
-// "datum, čas – typ – výčet" — used for both of the two listed entries; the
-// older one gets an extra "(N h zpátky)" tacked on by the caller.
+// Flat comma-separated list — no label prefix, no dashes: "datum, čas, typ
+// (číslo), ikony, Stres: X, čas spánku". The older of the two listed entries
+// gets an extra "(N h zpátky)" tacked on by the caller.
 function entrySummaryLine(entry) {
   const at = new Date(entry.at);
-  const whenText = `${formatCzechDateShort(at)}, ${formatHHMM(at)}`;
   const stoolLabel = STOOL_LABELS[entry.stoolType];
   const foodEmoji = entry.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
   const suppEmoji = entry.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
-  const extras = [];
-  if (foodEmoji || suppEmoji) extras.push(`${foodEmoji}${suppEmoji}`);
-  if (entry.stress !== null && entry.stress !== undefined) extras.push(`Stres: ${entry.stress}`);
-  if (entry.sleepAt) extras.push(`🌙 ${formatHHMM(new Date(entry.sleepAt))}`);
-  return [whenText, stoolLabel ? stoolLabel.name : null, extras.join(" ") || null].filter(Boolean).join(" – ");
+  const icons = `${foodEmoji}${suppEmoji}`;
+  const parts = [
+    formatCzechDateShort(at),
+    formatHHMM(at),
+    stoolLabel ? `${stoolLabel.name} (${entry.stoolType})` : null,
+    icons || null,
+  ];
+  if (entry.stress !== null && entry.stress !== undefined) parts.push(`Stres: ${entry.stress}`);
+  if (entry.sleepAt) parts.push(`🌙 ${formatHHMM(new Date(entry.sleepAt))}`);
+  return parts.filter(Boolean).join(", ");
 }
 
 function renderLastEntrySummary() {
@@ -611,7 +625,7 @@ function renderLastEntrySummary() {
     return;
   }
   const sorted = sortEntriesDesc(entries);
-  const lines = [`Poslední: ${entrySummaryLine(sorted[0])}`];
+  const lines = [entrySummaryLine(sorted[0])];
   if (sorted[1]) {
     const hoursAgo = Math.round((new Date() - new Date(sorted[1].at)) / 3600000);
     lines.push(`${entrySummaryLine(sorted[1])} (${hoursAgo} h zpátky)`);
@@ -629,8 +643,8 @@ function resetForm() {
   stressChoice.set(null);
   const now = new Date();
   stoolDateInputEl.value = dateKey(now);
-  updateStoolShortDate();
   stoolTimeInputEl.value = formatHHMM(now);
+  updateStoolShortDate();
   foodDateInputEl.value = "";
   foodTimeInputEl.value = "";
   updateFoodShortDate();
@@ -1033,8 +1047,8 @@ function openEdit(entry) {
   editingId = entry.id;
   const d = new Date(entry.at);
   editDateInputEl.value = dateKey(d);
-  updateEditShortDate();
   editTimeInputEl.value = formatHHMM(d);
+  updateEditShortDate();
   editStoolSliderEl.value = String(entry.stoolType);
   updateStoolDisplay(editStoolSliderEl, editStoolDescEl);
   editUrgencyChoice.set(entry.urgency);
