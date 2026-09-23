@@ -133,6 +133,11 @@ main {
   background: var(--hover);
 }
 
+.menu-item--danger {
+  color: var(--accent);
+  border-top: 1px solid var(--line);
+}
+
 .menu-item-static {
   color: var(--muted);
   font-size: 12px;
@@ -147,16 +152,12 @@ main {
 /* last entry summary */
 
 .last-entry-summary {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   font-size: 12px;
   color: var(--muted);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .last-entry-summary[hidden] {
@@ -172,17 +173,12 @@ main {
 /* stool block */
 
 .stool-block {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px;
   text-align: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .stool-block--compact {
-  padding: 10px 14px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .stool-desc {
@@ -206,32 +202,41 @@ main {
   accent-color: var(--ok);
 }
 
-/* compact scale slider (stress) */
-
-.scale-block {
-  margin-bottom: 16px;
-}
-
-.scale-row {
+/* Naléhavost/Nadýmání/Bolest as three compact widgets side by side instead
+   of stacked full-width rows — same total content, less vertical space. */
+.scale-trio {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 4px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
-.scale-label {
-  font-size: 13px;
+.scale-widget {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.scale-widget-label {
+  display: block;
+  font-size: 11px;
   color: var(--muted);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.scale-value {
+.scale-widget .tags-grid--choice {
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 0;
+}
+
+.scale-widget .tag-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
   font-size: 13px;
-  font-weight: 600;
-}
-
-.scale-slider {
-  width: 100%;
-  accent-color: var(--ok);
 }
 
 /* form fields */
@@ -286,8 +291,8 @@ main {
 /* Fixed (not flex-growing) so filling the value never resizes the box and
    shifts the diff text next to it. */
 .field-row--inline .date-short-wrap {
-  flex: 0 0 44px;
-  min-width: 44px;
+  flex: 0 0 52px;
+  min-width: 52px;
 }
 
 .field-row--inline input[type="time"] {
@@ -507,6 +512,12 @@ main {
 
 .save-btn:hover {
   filter: brightness(1.08);
+}
+
+.save-btn-hint {
+  font-weight: 400;
+  font-size: 0.8em;
+  opacity: 0.85;
 }
 
 .collapse-row {
