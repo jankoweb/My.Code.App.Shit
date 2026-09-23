@@ -186,6 +186,11 @@ main {
   font-weight: 600;
 }
 
+.stool-hint {
+  color: var(--muted);
+  font-weight: 400;
+}
+
 .stool-slider {
   width: 100%;
   accent-color: var(--ok);
@@ -195,7 +200,7 @@ main {
    of stacked full-width rows — same total content, less vertical space. */
 .scale-trio {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   margin-bottom: 10px;
 }
 
@@ -217,15 +222,50 @@ main {
 
 .scale-widget .tags-grid--choice {
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 0;
 }
 
+/* Bright border (not the default --line, which is close to the card
+   background) so each group of three numbers reads as its own unit instead
+   of blending into the group next to it. */
 .scale-widget .tag-btn {
   flex: 1;
   min-width: 0;
-  padding: 6px 0;
-  font-size: 13px;
+  padding: 8px 0;
+  font-size: 15px;
+  color: var(--fg);
+  border-color: var(--fg);
+}
+
+.stress-sleep-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stress-sleep-row .scale-widget {
+  flex: 0 0 auto;
+}
+
+.stress-sleep-row .scale-widget .tags-grid--choice {
+  justify-content: flex-start;
+}
+
+/* Unlike .scale-trio (three widgets sharing the full row width equally),
+   here the widget itself is auto-sized to content — flex:1 buttons in that
+   context collapse toward min-width:0 instead of taking a sensible size, so
+   they're sized by their own padding here instead. */
+.stress-sleep-row .scale-widget .tag-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+}
+
+.stress-sleep-row .field-row {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
 }
 
 /* form fields */
@@ -279,12 +319,12 @@ main {
 
 /* Fixed (not flex-growing) so filling the value never resizes the box and
    shifts the diff text next to it. */
-.field-row--inline .date-short-wrap {
+.field-row--inline .dt-btn--date {
   flex: 0 0 52px;
   min-width: 52px;
 }
 
-.field-row--inline input[type="time"] {
+.field-row--inline .dt-btn--time {
   flex: 0 0 56px;
   min-width: 56px;
 }
@@ -305,54 +345,48 @@ main {
   color: var(--accent);
 }
 
-/* Which vendor trick (if any) hides just the year sub-field of a native
-   date input varies by browser/OS — unreliable enough that it showed the
-   full year (and overlapped the field) on at least one real device. So
-   instead of fighting the native rendering, the input's own text is made
-   invisible and a short "D.M." label is stacked on top of it (same grid
-   cell) — the input still owns the value and the picker, the label is
-   what's actually visible. wireShortDate() in app.js builds this markup. */
-.date-short-wrap {
-  display: grid;
-  flex: 1 1 0;
-  min-width: 0;
+/* The native date/time input is taken out of layout entirely (see the
+   comment on wireDateTimeButton() in app.js for why) — visually hidden but
+   still focusable/functional, so showPicker() still opens its native
+   picker. The visible ".dt-btn" button next to it is a plain button that
+   reuses .edit-field-input's sizing rules (below/header/field-row), so no
+   separate width rules are needed for it. !important so this always wins
+   regardless of context — some .field-row variants set min-width: 130px,
+   which otherwise beats this on specificity, and a hidden utility class
+   needs to always fully collapse the element. */
+input.dt-hidden-input {
+  position: absolute !important;
+  opacity: 0 !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  pointer-events: none !important;
 }
 
-.date-short-wrap > * {
-  grid-area: 1 / 1;
-  min-width: 0;
-}
-
-.date-short-wrap input.date-short-input {
-  color: transparent;
-}
-
-.date-short-overlay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  color: var(--fg);
-  font-size: 13px;
+.dt-btn {
+  cursor: pointer;
+  font: inherit;
   font-variant-numeric: tabular-nums;
 }
 
-.date-short-overlay:empty::before {
-  content: "–.–.";
+.dt-btn:hover {
+  background: var(--hover);
+}
+
+.dt-btn:empty::before {
   color: var(--muted);
 }
 
-.field-row--inline .date-short-overlay {
-  font-size: 12px;
+.dt-btn--date:empty::before {
+  content: "–.–.";
 }
 
-/* The native calendar/clock icon just adds visual noise here — the whole
-   input is already tappable to open its picker without it, and on at least
-   one real device the icon's own box didn't shrink to fit the compact
-   field-row--inline width, pushing into (and overlapping) the next field. */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  display: none;
+.dt-btn--time:empty::before {
+  content: "--:--";
 }
 
 .choice-row {
@@ -516,35 +550,6 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   font-weight: 400;
   font-size: 0.8em;
   opacity: 0.85;
-}
-
-.collapse-row {
-  display: flex;
-  gap: 18px;
-  margin-bottom: 14px;
-}
-
-.collapse-toggle {
-  background: none;
-  border: none;
-  padding: 4px 0;
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.collapse-toggle:hover {
-  color: var(--fg);
-}
-
-.collapse-toggle.active {
-  color: var(--fg);
-  font-weight: 600;
-  text-decoration: none;
 }
 
 /* views */

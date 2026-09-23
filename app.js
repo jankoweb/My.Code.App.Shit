@@ -168,30 +168,57 @@ function formatCzechDateShort(d) {
   return `${d.getDate()}.${d.getMonth() + 1}.`;
 }
 
-// Which vendor trick (if any) hides just the year sub-field of a native date
-// input varies by browser/OS — on at least one real device the year showed
-// in full and overlapped the field. So instead of fighting native rendering,
-// the input's own text is made invisible (see .date-short-input in
-// style.css) and this short "D.M." label is stacked on top of it in the
-// same grid cell: the input still owns the value and the picker, the label
-// is what's actually visible.
-function wireShortDate(dateEl) {
-  const wrap = document.createElement("span");
-  wrap.className = "date-short-wrap";
-  dateEl.replaceWith(wrap);
-  wrap.appendChild(dateEl);
-  dateEl.classList.add("date-short-input");
-  const overlay = document.createElement("span");
-  overlay.className = "date-short-overlay";
-  overlay.setAttribute("aria-hidden", "true");
-  wrap.appendChild(overlay);
+// Native date/time inputs enforce their own minimum content width (day/
+// month/year segments — or, even with the picker icon hidden, the time
+// segments) that doesn't reliably shrink to a compact flex box on every
+// device. Several rounds of patching the native rendering in place (hiding
+// the picker icon, a transparent-input-plus-overlay trick, a fixed
+// flex-basis) all still left it overflowing into the next field on a real
+// device. So instead of sizing the native widget, it's taken out of layout
+// entirely (visually hidden, see .dt-hidden-input) and a plain button —
+// sized purely by our own CSS — shows the value and opens the native picker
+// via showPicker(). The input can't overflow a row it no longer occupies.
+function wireDateTimeButton(inputEl, kind, formatValue) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `edit-field-input dt-btn dt-btn--${kind}`;
+  inputEl.classList.add("dt-hidden-input");
+  inputEl.tabIndex = -1;
+  inputEl.before(btn);
+  btn.addEventListener("click", () => {
+    try {
+      if (inputEl.showPicker) inputEl.showPicker();
+      else inputEl.focus();
+    } catch {
+      inputEl.focus();
+    }
+  });
   function update() {
-    const parsed = parseDateInputValue(dateEl.value);
-    overlay.textContent = parsed ? formatCzechDateShort(new Date(parsed.year, parsed.month - 1, parsed.day)) : "";
+    btn.textContent = formatValue(inputEl.value);
   }
-  dateEl.addEventListener("input", update);
+  inputEl.addEventListener("input", update);
   update();
   return update;
+}
+
+function formatDateBtnText(value) {
+  const parsed = parseDateInputValue(value);
+  return parsed ? formatCzechDateShort(new Date(parsed.year, parsed.month - 1, parsed.day)) : "";
+}
+
+function formatTimeBtnText(value) {
+  return parseTimeInputValue(value) ? value : "";
+}
+
+// Wires a date+time pair together and returns one update() that refreshes
+// both buttons — same call-site shape as before (one update fn per row).
+function wireDateTimeRow(dateEl, timeEl) {
+  const updateDate = wireDateTimeButton(dateEl, "date", formatDateBtnText);
+  const updateTime = wireDateTimeButton(timeEl, "time", formatTimeBtnText);
+  return () => {
+    updateDate();
+    updateTime();
+  };
 }
 
 function parseDateTime(dateText, timeText) {
@@ -307,8 +334,6 @@ const lastEntrySummaryEl = $("lastEntrySummary");
 const foodDateInputEl = $("foodDateInput");
 const foodTimeInputEl = $("foodTimeInput");
 const foodDiffEl = $("foodDiff");
-const sleepRowEl = $("sleepRow");
-const sleepToggleBtnEl = $("sleepToggleBtn");
 const sleepDateInputEl = $("sleepDateInput");
 const sleepTimeInputEl = $("sleepTimeInput");
 const sleepDiffEl = $("sleepDiff");
@@ -317,8 +342,6 @@ const supplementsGridEl = $("supplementsGrid");
 const urgencyGroupEl = $("urgencyGroup");
 const bloatingGroupEl = $("bloatingGroup");
 const painGroupEl = $("painGroup");
-const stressBlockEl = $("stressBlock");
-const stressToggleBtnEl = $("stressToggleBtn");
 const stressGroupEl = $("stressGroup");
 const noteInputEl = $("noteInput");
 const noteToggleBtnEl = $("noteToggleBtn");
@@ -434,7 +457,9 @@ function buildTagButtons(container, items, tagSet, onChange) {
 function updateStoolDisplay(sliderEl, descEl) {
   const value = Number(sliderEl.value);
   const label = STOOL_LABELS[value];
-  descEl.innerHTML = label ? `<span class="stool-name">${label.name}</span>` : "";
+  descEl.innerHTML = label
+    ? `<span class="stool-name">${label.name}</span> <span class="stool-hint">– ${label.desc} (${value})</span>`
+    : "";
 }
 
 function createChoiceState(container, labels, initial, onChange) {
@@ -519,12 +544,12 @@ function updateEditSaveState() {
   editNoteInputEl,
 ].forEach((el) => el.addEventListener("input", updateEditSaveState));
 
-const updateStoolShortDate = wireShortDate(stoolDateInputEl);
-const updateFoodShortDate = wireShortDate(foodDateInputEl);
-const updateSleepShortDate = wireShortDate(sleepDateInputEl);
-const updateEditShortDate = wireShortDate(editDateInputEl);
-const updateEditFoodShortDate = wireShortDate(editFoodDateInputEl);
-const updateEditSleepShortDate = wireShortDate(editSleepDateInputEl);
+const updateStoolShortDate = wireDateTimeRow(stoolDateInputEl, stoolTimeInputEl);
+const updateFoodShortDate = wireDateTimeRow(foodDateInputEl, foodTimeInputEl);
+const updateSleepShortDate = wireDateTimeRow(sleepDateInputEl, sleepTimeInputEl);
+const updateEditShortDate = wireDateTimeRow(editDateInputEl, editTimeInputEl);
+const updateEditFoodShortDate = wireDateTimeRow(editFoodDateInputEl, editFoodTimeInputEl);
+const updateEditSleepShortDate = wireDateTimeRow(editSleepDateInputEl, editSleepTimeInputEl);
 
 // Food/sleep date/time is optional and starts empty — a date sitting there
 // with no time doesn't mean anything, so it's only worth defaulting once the
@@ -622,10 +647,6 @@ function resetForm() {
   noteInputEl.value = "";
   noteInputEl.hidden = true;
   noteToggleBtnEl.classList.remove("active");
-  stressBlockEl.hidden = true;
-  stressToggleBtnEl.classList.remove("active");
-  sleepRowEl.hidden = true;
-  sleepToggleBtnEl.classList.remove("active");
   renderLastEntrySummary();
 }
 
@@ -674,26 +695,6 @@ noteToggleBtnEl.addEventListener("click", () => {
   noteInputEl.hidden = !noteInputEl.hidden;
   noteToggleBtnEl.classList.toggle("active", !noteInputEl.hidden);
   if (!noteInputEl.hidden) noteInputEl.focus();
-});
-
-// Stres/Spánek are plain labels: tap reveals the control, already prefilled
-// (the stress slider always has a value; sleep gets filled to now the first
-// time it's opened, same as the "flush now" default).
-stressToggleBtnEl.addEventListener("click", () => {
-  stressBlockEl.hidden = !stressBlockEl.hidden;
-  stressToggleBtnEl.classList.toggle("active", !stressBlockEl.hidden);
-});
-
-sleepToggleBtnEl.addEventListener("click", () => {
-  sleepRowEl.hidden = !sleepRowEl.hidden;
-  sleepToggleBtnEl.classList.toggle("active", !sleepRowEl.hidden);
-  if (!sleepRowEl.hidden && !sleepTimeInputEl.value) {
-    const now = new Date();
-    sleepDateInputEl.value = dateKey(now);
-    updateSleepShortDate();
-    sleepTimeInputEl.value = formatHHMM(now);
-    updateFormSleepDiff();
-  }
 });
 
 // --- menu ---

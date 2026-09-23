@@ -62,21 +62,17 @@
 
     <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
 
-    <div class="collapse-row">
-      <button type="button" id="stressToggleBtn" class="collapse-toggle">Stres</button>
-      <button type="button" id="sleepToggleBtn" class="collapse-toggle">Spánek</button>
-    </div>
-
-    <div class="choice-row" id="stressBlock" hidden>
-      <span class="choice-row-label">Stres</span>
-      <div class="tags-grid tags-grid--choice" id="stressGroup"></div>
-    </div>
-
-    <div class="field-row field-row--inline" id="sleepRow" hidden>
-      <span class="field-row-label">Spánek</span>
-      <input type="date" id="sleepDateInput" class="edit-field-input">
-      <input type="time" id="sleepTimeInput" class="edit-field-input">
-      <span id="sleepDiff" class="field-row-diff" hidden></span>
+    <div class="stress-sleep-row">
+      <div class="scale-widget">
+        <span class="scale-widget-label">Stres</span>
+        <div class="tags-grid tags-grid--choice" id="stressGroup"></div>
+      </div>
+      <div class="field-row field-row--inline" id="sleepRow">
+        <span class="field-row-label">Spánek</span>
+        <input type="date" id="sleepDateInput" class="edit-field-input">
+        <input type="time" id="sleepTimeInput" class="edit-field-input">
+        <span id="sleepDiff" class="field-row-diff" hidden></span>
+      </div>
     </div>
 
   </main>
