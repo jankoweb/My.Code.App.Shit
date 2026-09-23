@@ -105,7 +105,7 @@ const SUPPLEMENTS = [
   { key: "d", emoji: "☀️", label: "D" },
   { key: "b", emoji: "🥚", label: "B" },
   { key: "e", emoji: "🫒", label: "E" },
-  { key: "laktobacily", emoji: "🥛", label: "Laktobacily" },
+  { key: "laktobacily", emoji: "🥛", label: "Lakto" },
 ];
 
 const MONTH_NAMES = [
@@ -329,6 +329,7 @@ const menuBtnEl = $("menuBtn");
 const menuEl = $("menu");
 const showStatsBtnEl = $("showStatsBtn");
 const settingsBtnEl = $("settingsBtn");
+const discardBtnEl = $("discardBtn");
 
 const statsViewEl = $("statsView");
 const settingsViewEl = $("settingsView");
@@ -434,7 +435,7 @@ function updateStoolDisplay(sliderEl, descEl) {
   const value = Number(sliderEl.value);
   const label = STOOL_LABELS[value];
   descEl.innerHTML = label
-    ? `<span class="stool-name">${value} · ${label.name}</span> <span class="stool-hint">– ${label.desc}</span>`
+    ? `<span class="stool-name">${label.name}</span> <span class="stool-hint">– ${label.desc} (${value})</span>`
     : "";
 }
 
@@ -789,6 +790,11 @@ function openSettingsView() {
 
 showStatsBtnEl.addEventListener("click", openStatsView);
 settingsBtnEl.addEventListener("click", openSettingsView);
+
+discardBtnEl.addEventListener("click", () => {
+  resetForm();
+  closeMenu();
+});
 
 document.querySelectorAll("#statsView .stat[data-hint]").forEach((el) => {
   el.addEventListener("click", () => showTooltip(el, el.dataset.hint));

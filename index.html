@@ -24,6 +24,7 @@
         <div id="menu" class="menu" hidden>
           <button id="showStatsBtn" class="menu-item">Přehled</button>
           <button id="settingsBtn" class="menu-item">Nastavení</button>
+          <button id="discardBtn" class="menu-item menu-item--danger">Zahodit záznam</button>
         </div>
       </div>
     </div>
@@ -35,19 +36,19 @@
       <input type="range" id="stoolSlider" class="stool-slider" min="0" max="6" step="1" value="1">
     </div>
 
-    <div class="choice-row">
-      <span class="choice-row-label">Naléhavost</span>
-      <div class="tags-grid tags-grid--choice" id="urgencyGroup"></div>
-    </div>
-
-    <div class="choice-row">
-      <span class="choice-row-label">Nadýmání</span>
-      <div class="tags-grid tags-grid--choice" id="bloatingGroup"></div>
-    </div>
-
-    <div class="choice-row">
-      <span class="choice-row-label">Bolest, křeče</span>
-      <div class="tags-grid tags-grid--choice" id="painGroup"></div>
+    <div class="scale-trio">
+      <div class="scale-widget">
+        <span class="scale-widget-label">Naléhavost</span>
+        <div class="tags-grid tags-grid--choice" id="urgencyGroup"></div>
+      </div>
+      <div class="scale-widget">
+        <span class="scale-widget-label">Nadýmání</span>
+        <div class="tags-grid tags-grid--choice" id="bloatingGroup"></div>
+      </div>
+      <div class="scale-widget">
+        <span class="scale-widget-label">Bolest</span>
+        <div class="tags-grid tags-grid--choice" id="painGroup"></div>
+      </div>
     </div>
 
     <div class="field-row field-row--inline">
@@ -59,10 +60,7 @@
 
     <div class="tags-grid" id="tagsGrid"></div>
 
-    <div class="choice-row">
-      <span class="choice-row-label">Doplňky</span>
-      <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
-    </div>
+    <div class="tags-grid tags-grid--compact" id="supplementsGrid"></div>
 
     <div class="collapse-row">
       <button type="button" id="stressToggleBtn" class="collapse-toggle">Stres</button>
@@ -89,7 +87,7 @@
       <div id="formError" class="form-error" hidden></div>
       <div class="save-row">
         <button id="noteToggleBtn" type="button" class="note-toggle-btn" aria-label="Poznámka">📝</button>
-        <button id="saveBtn" class="save-btn">🚽 Spláchnout</button>
+        <button id="saveBtn" class="save-btn">🚽 <strong>Spláchnout</strong> <span class="save-btn-hint">(uložit)</span></button>
       </div>
       <div id="buildFooter" class="build-footer"></div>
     </div>
@@ -234,7 +232,6 @@
 
       <div class="tags-grid" id="editTagsGrid"></div>
 
-      <div class="field-label">Doplňky</div>
       <div class="tags-grid tags-grid--compact" id="editSupplementsGrid"></div>
 
       <div class="field-row field-row--inline">
