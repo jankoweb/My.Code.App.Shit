@@ -164,12 +164,6 @@ main {
   display: none;
 }
 
-.last-entry-summary-when {
-  color: var(--fg);
-  font-weight: 600;
-  font-size: 13px;
-}
-
 /* stool block */
 
 .stool-block {
@@ -190,11 +184,6 @@ main {
 .stool-name {
   color: var(--fg);
   font-weight: 600;
-}
-
-.stool-hint {
-  color: var(--muted);
-  font-weight: 400;
 }
 
 .stool-slider {
@@ -355,6 +344,15 @@ main {
 
 .field-row--inline .date-short-overlay {
   font-size: 12px;
+}
+
+/* The native calendar/clock icon just adds visual noise here — the whole
+   input is already tappable to open its picker without it, and on at least
+   one real device the icon's own box didn't shrink to fit the compact
+   field-row--inline width, pushing into (and overlapping) the next field. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
 }
 
 .choice-row {

@@ -434,9 +434,7 @@ function buildTagButtons(container, items, tagSet, onChange) {
 function updateStoolDisplay(sliderEl, descEl) {
   const value = Number(sliderEl.value);
   const label = STOOL_LABELS[value];
-  descEl.innerHTML = label
-    ? `<span class="stool-name">${label.name}</span> <span class="stool-hint">– ${label.desc} (${value})</span>`
-    : "";
+  descEl.innerHTML = label ? `<span class="stool-name">${label.name}</span>` : "";
 }
 
 function createChoiceState(container, labels, initial, onChange) {
@@ -566,9 +564,21 @@ function hideFormError(el) {
   el.hidden = true;
 }
 
-// Sleep is often not filled on every entry, so its line in the summary
-// comes from the most recent entry that actually has it — which may not be
-// the same entry as the rest of the summary.
+// "datum, čas – typ – výčet" — used for both of the two listed entries; the
+// older one gets an extra "(N h zpátky)" tacked on by the caller.
+function entrySummaryLine(entry) {
+  const at = new Date(entry.at);
+  const whenText = `${formatCzechDateShort(at)}, ${formatHHMM(at)}`;
+  const stoolLabel = STOOL_LABELS[entry.stoolType];
+  const foodEmoji = entry.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
+  const suppEmoji = entry.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
+  const extras = [];
+  if (foodEmoji || suppEmoji) extras.push(`${foodEmoji}${suppEmoji}`);
+  if (entry.stress !== null && entry.stress !== undefined) extras.push(`Stres: ${entry.stress}`);
+  if (entry.sleepAt) extras.push(`🌙 ${formatHHMM(new Date(entry.sleepAt))}`);
+  return [whenText, stoolLabel ? stoolLabel.name : null, extras.join(" ") || null].filter(Boolean).join(" – ");
+}
+
 function renderLastEntrySummary() {
   const entries = loadEntries();
   if (!entries.length) {
@@ -576,35 +586,11 @@ function renderLastEntrySummary() {
     return;
   }
   const sorted = sortEntriesDesc(entries);
-  const last = sorted[0];
-  const lastSleep = sorted.find((e) => e.sleepAt);
-
-  const at = new Date(last.at);
-  const now = new Date();
-  const whenText = dateKey(at) === todayKey() ? formatHHMM(at) : `${formatCzechDateShort(at)} ${formatHHMM(at)}`;
-  const last24hCount = entries.filter((e) => {
-    const diff = now - new Date(e.at);
-    return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
-  }).length;
-
-  const stoolLabel = STOOL_LABELS[last.stoolType];
-  const foodEmoji = last.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
-  const suppEmoji = last.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
-
-  const lines = [];
-  lines.push(`<span class="last-entry-summary-when">(${last24hCount}) Naposledy: ${whenText}</span>`);
-  const typeLine = [stoolLabel ? stoolLabel.name : null, foodEmoji, suppEmoji].filter(Boolean).join("  ");
-  if (typeLine) lines.push(typeLine);
-
-  const extras = [];
-  if (last.stress !== null && last.stress !== undefined) extras.push(`Stres: ${last.stress}`);
-  if (lastSleep) {
-    const sd = new Date(lastSleep.sleepAt);
-    const sleepWhen = dateKey(sd) === todayKey() ? formatHHMM(sd) : `${formatCzechDateShort(sd)} ${formatHHMM(sd)}`;
-    extras.push(`🌙 ${sleepWhen}`);
+  const lines = [`Poslední: ${entrySummaryLine(sorted[0])}`];
+  if (sorted[1]) {
+    const hoursAgo = Math.round((new Date() - new Date(sorted[1].at)) / 3600000);
+    lines.push(`${entrySummaryLine(sorted[1])} (${hoursAgo} h zpátky)`);
   }
-  if (extras.length) lines.push(extras.join(" · "));
-
   lastEntrySummaryEl.innerHTML = lines.map((line) => `<div>${line}</div>`).join("");
   lastEntrySummaryEl.hidden = false;
 }
