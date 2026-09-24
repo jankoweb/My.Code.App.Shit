@@ -57,3 +57,6 @@ jednodušší cestu?"
   reálném zařízení, ne lokálně. Bez úspěšně dokončeného deploye nemá
   jak změny ověřit — po merge vždy počkej a potvrď, že deploy run
   doběhl (`conclusion: success`), než úkol označíš za hotový.
+- Po vytvoření draft PR se vždy rovnou zeptej na merge přímou otázkou
+  (ne jen popiš změny a čekej) — ať stačí odpovědět jedním slovem
+  ("jj"/"jo"/"merge").
