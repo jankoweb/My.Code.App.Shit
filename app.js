@@ -35,9 +35,37 @@ function saveStoolLabels(labels) {
 
 let STOOL_LABELS = loadStoolLabels();
 
-// Naléhavost/Nadýmání/Bolest/Stres share one 0-2 scale, shown as bare
-// numbers (no word labels) — see createChoiceState below.
-const SCALE_LABELS = { 0: "0", 1: "1", 2: "2" };
+// Shared by the food-tag and supplement lists below — same "editable list of
+// a fixed length, falls back to defaults per-item" pattern as stool labels
+// above, just with an extra icon field. The list's length/order/key/
+// breakAfter are fixed (not user-editable, so TAG_COMPONENTS lookups and
+// grid layout stay stable) — only emoji/label/desc can be customized.
+function loadEditableItems(storageKey, defaults) {
+  let raw = null;
+  try {
+    raw = JSON.parse(localStorage.getItem(storageKey) || "null");
+  } catch {
+    raw = null;
+  }
+  return defaults.map((def, i) => {
+    const saved = raw && raw[i];
+    const emoji = saved && typeof saved.emoji === "string" && saved.emoji.trim() ? saved.emoji : def.emoji;
+    const label = saved && typeof saved.label === "string" && saved.label.trim() ? saved.label : def.label;
+    const desc = saved && typeof saved.desc === "string" ? saved.desc : def.desc;
+    return { ...def, emoji, label, desc };
+  });
+}
+
+function saveEditableItems(storageKey, items) {
+  localStorage.setItem(storageKey, JSON.stringify(items.map((it) => ({ emoji: it.emoji, label: it.label, desc: it.desc }))));
+}
+
+// Naléhavost/Nadýmání/Bolest/Stres share one scale, shown as bare numbers
+// (no word labels) — see createChoiceState below. No button for 0: leaving
+// the whole group untouched already means "0/not answered" (stored as
+// null, see clampScale), so a 0 button would just be a second way to say
+// the same thing.
+const SCALE_LABELS = { 1: "1", 2: "2" };
 
 // Tags on the entry screen are food items (fast to recognize & tap).
 // Internally each maps to one or more underlying components, so charts and
@@ -47,22 +75,26 @@ const SCALE_LABELS = { 0: "0", 1: "1", 2: "2" };
 // plain flex-wrap can't guarantee e.g. cibule/zelenina/ovoce land on the
 // same row together, since that depends on how much space is left over from
 // whatever wrapped before them.
-const TAGS = [
-  { key: "syry", emoji: "🧀", label: "Sýry" },
-  { key: "mlecne", emoji: "🥛", label: "Mléčné výrobky" },
-  { key: "uzeniny", emoji: "🍖", label: "Uzeniny, šunky" },
-  { key: "tucne", emoji: "🧈", label: "Tučné" },
-  { key: "smazene", emoji: "🍟", label: "Smažené" },
-  { key: "palive", emoji: "🌶️", label: "Pálivé" },
-  { key: "sladke", emoji: "🍫", label: "Sladké", breakAfter: true },
-  { key: "cibule", emoji: "🧅", label: "Cibule" },
-  { key: "zelenina", emoji: "🥦", label: "Zelenina" },
-  { key: "ovoce", emoji: "🍎", label: "Ovoce", breakAfter: true },
-  { key: "kofein", emoji: "☕", label: "Kofein" },
-  { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát", breakAfter: true },
-  { key: "nakladane", emoji: "🫙", label: "Nakládané" },
-  { key: "neobvykle", emoji: "➕", label: "Neobvyklé" },
+const TAGS_KEY = "shit-app-tags";
+
+const DEFAULT_TAGS = [
+  { key: "syry", emoji: "🧀", label: "Sýry", desc: "" },
+  { key: "mlecne", emoji: "🥛", label: "Mléčné výrobky", desc: "" },
+  { key: "uzeniny", emoji: "🍖", label: "Uzeniny, šunky", desc: "" },
+  { key: "tucne", emoji: "🧈", label: "Tučné", desc: "" },
+  { key: "smazene", emoji: "🍟", label: "Smažené", desc: "" },
+  { key: "palive", emoji: "🌶️", label: "Pálivé", desc: "", breakAfter: true },
+  { key: "cibule", emoji: "🧅", label: "Cibule", desc: "" },
+  { key: "zelenina", emoji: "🥦", label: "Zelenina", desc: "" },
+  { key: "ovoce", emoji: "🍎", label: "Ovoce", desc: "", breakAfter: true },
+  { key: "kofein", emoji: "☕", label: "Kofein", desc: "" },
+  { key: "sladke", emoji: "🍫", label: "Sladké", desc: "" },
+  { key: "prefabrikat", emoji: "🥫", label: "Prefabrikát", desc: "", breakAfter: true },
+  { key: "nakladane", emoji: "🫙", label: "Nakládané", desc: "" },
+  { key: "neobvykle", emoji: "➕", label: "Neobvyklé", desc: "" },
 ];
+
+let TAGS = loadEditableItems(TAGS_KEY, DEFAULT_TAGS);
 
 const TAG_COMPONENTS = {
   syry: ["tuk", "mlecne"],
@@ -102,15 +134,19 @@ function entryComponents(entry) {
   return set;
 }
 
-const SUPPLEMENTS = [
-  { key: "c", emoji: "🍊", label: "C" },
-  { key: "mg", emoji: "🥬", label: "Mg" },
-  { key: "zn", emoji: "🦪", label: "Zn" },
-  { key: "d", emoji: "☀️", label: "D" },
-  { key: "b", emoji: "🥚", label: "B" },
-  { key: "e", emoji: "🫒", label: "E" },
-  { key: "laktobacily", emoji: "🥛", label: "Lakto" },
+const SUPPLEMENTS_KEY = "shit-app-supplements";
+
+const DEFAULT_SUPPLEMENTS = [
+  { key: "c", emoji: "🍊", label: "C", desc: "" },
+  { key: "mg", emoji: "🥬", label: "Mg", desc: "" },
+  { key: "zn", emoji: "🦪", label: "Zn", desc: "" },
+  { key: "d", emoji: "☀️", label: "D", desc: "" },
+  { key: "b", emoji: "🥚", label: "B", desc: "" },
+  { key: "e", emoji: "🫒", label: "E", desc: "" },
+  { key: "laktobacily", emoji: "🦠", label: "Lakto", desc: "" },
 ];
+
+let SUPPLEMENTS = loadEditableItems(SUPPLEMENTS_KEY, DEFAULT_SUPPLEMENTS);
 
 const MONTH_NAMES = [
   "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
@@ -427,6 +463,10 @@ const exportBtnEl = $("exportBtn");
 const importInputEl = $("importInput");
 const stoolLabelsEditorEl = $("stoolLabelsEditor");
 const stoolLabelsResetBtnEl = $("stoolLabelsResetBtn");
+const tagsEditorEl = $("tagsEditor");
+const tagsEditorResetBtnEl = $("tagsEditorResetBtn");
+const supplementsEditorEl = $("supplementsEditor");
+const supplementsEditorResetBtnEl = $("supplementsEditorResetBtn");
 
 // --- form: tags ---
 
@@ -436,13 +476,21 @@ let formSupplements = new Set();
 let editSupplements = new Set();
 let editingId = null;
 
-function buildTagButtons(container, items, tagSet, onChange) {
+// stacked: icon above label instead of side by side — used for supplements
+// so every button is the same height regardless of label length (a plain
+// side-by-side layout let the one longer label wrap onto its own second
+// line while the one-letter ones stayed single-line).
+function buildTagButtons(container, items, tagSet, onChange, { stacked } = {}) {
   container.innerHTML = "";
   items.forEach((tag) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "tag-btn";
-    btn.textContent = `${tag.emoji} ${tag.label}`;
+    btn.className = stacked ? "tag-btn tag-btn--stacked" : "tag-btn";
+    if (stacked) {
+      btn.innerHTML = `<span class="tag-btn-icon">${tag.emoji}</span><span class="tag-btn-label">${tag.label}</span>`;
+    } else {
+      btn.textContent = `${tag.emoji} ${tag.label}`;
+    }
     if (tagSet.has(tag.key)) btn.classList.add("active");
     btn.addEventListener("click", () => {
       if (tagSet.has(tag.key)) {
@@ -598,18 +646,17 @@ function hideFormError(el) {
   el.hidden = true;
 }
 
-// Flat comma-separated list — no label prefix, no dashes: "datum, čas, typ
-// (číslo), ikony, Stres: X, čas spánku". The older of the two listed entries
-// gets an extra "(N h zpátky)" tacked on by the caller.
-function entrySummaryLine(entry) {
+// Flat comma-separated list, one entry = one line (wraps only if it has to,
+// never truncated): "datum, čas (N h zpátky), typ (číslo), ikony, Stres: X,
+// čas spánku".
+function entrySummaryLine(entry, hoursAgo) {
   const at = new Date(entry.at);
   const stoolLabel = STOOL_LABELS[entry.stoolType];
   const foodEmoji = entry.tags.map((k) => TAGS.find((t) => t.key === k)?.emoji || "").join("");
   const suppEmoji = entry.supplements.map((k) => SUPPLEMENTS.find((s) => s.key === k)?.emoji || "").join("");
   const icons = `${foodEmoji}${suppEmoji}`;
   const parts = [
-    formatCzechDateShort(at),
-    formatHHMM(at),
+    `${formatCzechDateShort(at)}, ${formatHHMM(at)} (${hoursAgo} h zpátky)`,
     stoolLabel ? `${stoolLabel.name} (${entry.stoolType})` : null,
     icons || null,
   ];
@@ -624,12 +671,10 @@ function renderLastEntrySummary() {
     lastEntrySummaryEl.hidden = true;
     return;
   }
-  const sorted = sortEntriesDesc(entries);
-  const lines = [entrySummaryLine(sorted[0])];
-  if (sorted[1]) {
-    const hoursAgo = Math.round((new Date() - new Date(sorted[1].at)) / 3600000);
-    lines.push(`${entrySummaryLine(sorted[1])} (${hoursAgo} h zpátky)`);
-  }
+  const now = new Date();
+  const lines = sortEntriesDesc(entries)
+    .slice(0, 2)
+    .map((e) => entrySummaryLine(e, Math.round((now - new Date(e.at)) / 3600000)));
   lastEntrySummaryEl.innerHTML = lines.map((line) => `<div>${line}</div>`).join("");
   lastEntrySummaryEl.hidden = false;
 }
@@ -657,7 +702,7 @@ function resetForm() {
   formTags = new Set();
   buildTagButtons(tagsGridEl, TAGS, formTags);
   formSupplements = new Set();
-  buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements);
+  buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements, null, { stacked: true });
   noteInputEl.value = "";
   noteInputEl.hidden = true;
   noteToggleBtnEl.classList.remove("active");
@@ -742,11 +787,19 @@ function hideAllOverlays() {
   });
 }
 
+// "Zahodit záznam" only makes sense while the main form is the visible
+// screen — resetting it from inside Přehled/Nastavení would be a no-op the
+// user can't even see happen.
+function updateDiscardVisibility() {
+  discardBtnEl.hidden = overlayStack.length > 0;
+}
+
 function openOverlay(el) {
   hideAllOverlays();
   el.hidden = false;
   overlayStack.push(el);
   history.pushState({ shitOverlay: true }, "");
+  updateDiscardVisibility();
 }
 
 window.addEventListener("popstate", () => {
@@ -754,6 +807,7 @@ window.addEventListener("popstate", () => {
   const previous = overlayStack[overlayStack.length - 1];
   hideAllOverlays();
   if (previous) previous.hidden = false;
+  updateDiscardVisibility();
 });
 
 function goBack() {
@@ -762,6 +816,7 @@ function goBack() {
   } else {
     overlayStack = [];
     hideAllOverlays();
+    updateDiscardVisibility();
   }
 }
 
@@ -1078,7 +1133,7 @@ function openEdit(entry) {
   editTags = new Set(entry.tags);
   buildTagButtons(editTagsGridEl, TAGS, editTags, updateEditSaveState);
   editSupplements = new Set(entry.supplements);
-  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements, updateEditSaveState);
+  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements, updateEditSaveState, { stacked: true });
   editNoteInputEl.value = entry.note || "";
   editOverlayEl.hidden = false;
   editSnapshot = getEditFormState();
@@ -1252,13 +1307,78 @@ stoolLabelsResetBtnEl.addEventListener("click", () => {
 
 renderStoolLabelsEditor();
 
+// Re-renders the already-built grids (main form + edit overlay) after a
+// food-tag/supplement edit — buildTagButtons() is normally only called once
+// at reset/open time, so without this an edit wouldn't show up until then.
+function refreshTagButtons() {
+  buildTagButtons(tagsGridEl, TAGS, formTags);
+  buildTagButtons(supplementsGridEl, SUPPLEMENTS, formSupplements, null, { stacked: true });
+  buildTagButtons(editTagsGridEl, TAGS, editTags, updateEditSaveState);
+  buildTagButtons(editSupplementsGridEl, SUPPLEMENTS, editSupplements, updateEditSaveState, { stacked: true });
+}
+
+// One input per item, "ikona; název; popis" — same one-line-per-item pattern
+// as the stool-consistency editor above, with an extra leading icon field.
+// key/breakAfter aren't editable here (see loadEditableItems), so tag
+// identity and grid row grouping stay stable regardless of what's typed.
+function renderItemsEditor(containerEl, items, storageKey, defaults) {
+  containerEl.innerHTML = "";
+  items.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "stool-label-row";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "edit-field-input stool-label-input";
+    input.value = `${item.emoji}; ${item.label}; ${item.desc}`;
+    input.addEventListener("change", () => {
+      const [emojiPart, namePart, ...rest] = input.value.split(";");
+      const emoji = (emojiPart || "").trim() || defaults[i].emoji;
+      const label = (namePart || "").trim() || defaults[i].label;
+      const desc = rest.join(";").trim();
+      items[i] = { ...items[i], emoji, label, desc };
+      saveEditableItems(storageKey, items);
+      input.value = `${emoji}; ${label}; ${desc}`;
+      refreshTagButtons();
+    });
+
+    row.appendChild(input);
+    containerEl.appendChild(row);
+  });
+}
+
+function renderTagsEditor() {
+  renderItemsEditor(tagsEditorEl, TAGS, TAGS_KEY, DEFAULT_TAGS);
+}
+
+function renderSupplementsEditor() {
+  renderItemsEditor(supplementsEditorEl, SUPPLEMENTS, SUPPLEMENTS_KEY, DEFAULT_SUPPLEMENTS);
+}
+
+tagsEditorResetBtnEl.addEventListener("click", () => {
+  TAGS = DEFAULT_TAGS.map((t) => ({ ...t }));
+  localStorage.removeItem(TAGS_KEY);
+  renderTagsEditor();
+  refreshTagButtons();
+});
+
+supplementsEditorResetBtnEl.addEventListener("click", () => {
+  SUPPLEMENTS = DEFAULT_SUPPLEMENTS.map((s) => ({ ...s }));
+  localStorage.removeItem(SUPPLEMENTS_KEY);
+  renderSupplementsEditor();
+  refreshTagButtons();
+});
+
+renderTagsEditor();
+renderSupplementsEditor();
+
 // --- init ---
 
 resetForm();
 
-const buildFooterEl = $("buildFooter");
-if (buildFooterEl && window.BUILD_INFO) {
+const menuVersionInfoEl = $("menuVersionInfo");
+if (menuVersionInfoEl && window.BUILD_INFO) {
   const { sha, time } = window.BUILD_INFO;
   const timeText = time ? new Date(time).toLocaleString("cs-CZ") : "lokální vývoj";
-  buildFooterEl.textContent = `verze ${sha} · build ${timeText}`;
+  menuVersionInfoEl.textContent = `verze ${sha} · build ${timeText}`;
 }
