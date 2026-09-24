@@ -53,3 +53,7 @@ jednodušší cestu?"
   https://jankoweb.github.io/My.Code.App.Shit/
 - Hlavní větev je `main`, deploy workflow (`pages.yml`) se spouští při
   pushi právě do ní.
+- Uživatel appku testuje výhradně přes nasazenou GitHub Pages URL na
+  reálném zařízení, ne lokálně. Bez úspěšně dokončeného deploye nemá
+  jak změny ověřit — po merge vždy počkej a potvrď, že deploy run
+  doběhl (`conclusion: success`), než úkol označíš za hotový.
