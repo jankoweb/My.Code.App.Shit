@@ -130,7 +130,7 @@ const COMPONENTS = [
 
 function entryComponents(entry) {
   const set = new Set();
-  (entry.tags || []).forEach((tagKey) => TAG_COMPONENTS[tagKey].forEach((c) => set.add(c)));
+  (entry.tags || []).forEach((tagKey) => (TAG_COMPONENTS[tagKey] || []).forEach((c) => set.add(c)));
   return set;
 }
 
