@@ -1,3 +1,5 @@
+> **⚠️ Archivováno** — Modul Zápisky stolice byl přesunut jako integrovaná součást aplikace [My.Code.App.Stop](https://github.com/jankoweb-org/My.Code.App.Stop). Toto repo slouží jako archiv původní samostatné appky. Data uložená v `localStorage` pod klíčem `shit-app-entries` jsou kompatibilní s novou appkou.
+
 # Aplikace na 💩
 
 Rychlá PWA appka na záznam typu stolice a souvisejícího jídla. Otevřeš
